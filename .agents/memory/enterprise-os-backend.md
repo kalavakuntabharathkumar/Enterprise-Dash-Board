@@ -13,6 +13,24 @@ passlib 1.7.4 is incompatible with bcrypt 5.0.0. bcrypt 5 enforces the 72-byte l
 
 **How to apply:** Do NOT re-introduce passlib or bcrypt. If password hashing needs upgrading, use argon2-cffi instead.
 
+## verify_password parsing bug (fixed)
+
+The PBKDF2 hash format is `pbkdf2:sha256:260000$SALT$HASH`. The original `verify_password` unpacked `split("$", 2)` as `(_, algo_iters, rest)` — putting the SALT into `algo_iters` and HASH into `rest`, then tried to rsplit the SALT by ":" which silently threw an exception, always returning False.
+
+**Fix:** unpack as `prefix, salt, expected_hex = stored_hash.split("$", 2)`, then `_, algo, iters_str = prefix.split(":")`.
+
+**Why:** The variable name order was simply swapped from the format structure.
+
+**How to apply:** If verify_password returns False for all passwords, check the split/unpack order matches the hash format. Also delete `backend/enterprise_os.db` after this fix so re-seed generates correct hashes.
+
+## Workflow startup requirements
+
+Backend workflow command: `cd /home/runner/workspace/backend && /home/runner/workspace/.pythonlibs/bin/uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload`
+
+Frontend workflow command: `PORT=22209 BASE_PATH=/ pnpm --filter @workspace/enterprise-os run dev`
+
+Required pip packages (install if missing): fastapi, sqlalchemy, python-jose[cryptography], pydantic, openai, python-dotenv, uvicorn
+
 ## DATABASE_URL conflict
 
 The Replit workspace sets `DATABASE_URL` to the PostgreSQL connection string for the shared DB. The Enterprise OS backend uses SQLite, so it reads `ENTERPRISE_DB_URL` instead, defaulting to `sqlite:///./enterprise_os.db`.

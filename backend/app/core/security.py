@@ -26,9 +26,9 @@ def get_password_hash(password: str) -> str:
 def verify_password(plain_password: str, stored_hash: str) -> bool:
     try:
         if stored_hash.startswith("pbkdf2:"):
-            _, algo_iters, rest = stored_hash.split("$", 2)
-            _, algo, iters_str = algo_iters.rsplit(":", 2)
-            salt, expected_hex = rest.split("$", 1)
+            # Format: pbkdf2:sha256:260000$SALT$HASH
+            prefix, salt, expected_hex = stored_hash.split("$", 2)
+            _, algo, iters_str = prefix.split(":")
             iters = int(iters_str)
             dk = hashlib.pbkdf2_hmac(algo, plain_password.encode(), salt.encode(), iters)
             return hmac.compare_digest(binascii.hexlify(dk).decode(), expected_hex)

@@ -23,7 +23,7 @@ export default function LoginPage() {
   
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "admin@enterprise.com", password: "password123" },
+    defaultValues: { email: "admin@enterpriseos.com", password: "admin123" },
   });
 
   const loginMutation = useLogin();
@@ -64,7 +64,7 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="admin@enterprise.com" {...field} className="bg-gray-50/50" />
+                      <Input placeholder="admin@enterpriseos.com" {...field} className="bg-gray-50/50" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
