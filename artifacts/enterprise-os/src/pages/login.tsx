@@ -40,6 +40,11 @@ export default function LoginPage() {
     defaultValues: { email: "", password: "" },
   });
 
+  const fillDemo = () => {
+    form.setValue("email", "admin@enterpriseos.com");
+    form.setValue("password", "admin123");
+  };
+
   const loginMutation = useLogin();
 
   const onSubmit = (values: z.infer<typeof loginSchema>) => {
@@ -250,7 +255,18 @@ export default function LoginPage() {
             </form>
           </Form>
 
-          <div className="mt-8 pt-8 border-t border-gray-100">
+          <div className="mt-6">
+            <button
+              type="button"
+              onClick={fillDemo}
+              className="w-full py-2.5 px-4 rounded-lg border border-dashed border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/50 transition-all text-xs text-gray-500 hover:text-indigo-700 font-medium flex items-center justify-center gap-2 group"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 group-hover:bg-indigo-400 transition-colors" />
+              Use demo credentials
+            </button>
+          </div>
+
+          <div className="mt-6 pt-6 border-t border-gray-100">
             <div className="flex items-center gap-2 text-xs text-gray-400 justify-center">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
               <span>Secured with enterprise-grade encryption</span>
