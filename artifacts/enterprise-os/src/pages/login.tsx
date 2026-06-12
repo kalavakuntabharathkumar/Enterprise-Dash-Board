@@ -219,7 +219,7 @@ export default function LoginPage() {
                           placeholder="••••••••"
                           autoComplete="current-password"
                           {...field}
-                          className="h-11 bg-white border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15 pr-10 transition-all rounded-lg text-sm"
+                          className="h-11 bg-white border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15 pr-10 transition-all rounded-lg text-sm text-gray-900 placeholder:text-gray-400"
                         />
                         <button
                           type="button"

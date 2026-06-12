@@ -141,16 +141,16 @@ export default function EmployeesPage() {
             return (
               <Link key={emp.id} to={`/hrms/employees/${emp.id}`}
                 className="group bg-white dark:bg-white/3 border border-gray-100 dark:border-white/8 rounded-2xl overflow-hidden hover:border-indigo-200 dark:hover:border-indigo-500/30 hover:shadow-lg dark:hover:shadow-black/20 transition-all duration-200 hover:-translate-y-0.5">
-                {/* Top gradient bar */}
-                <div className={cn("h-12 bg-gradient-to-r", gradient, "relative")}>
+                {/* Top gradient bar with avatar inside */}
+                <div className={cn("h-16 bg-gradient-to-r", gradient, "relative flex items-end px-4 pb-0")}>
                   <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "radial-gradient(circle at 30% 50%, white 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
+                  <div className={cn("relative z-10 w-12 h-12 rounded-xl bg-gradient-to-br border-2 border-white dark:border-white/20 flex items-center justify-center text-white font-bold text-sm shadow-md translate-y-1/2", gradient)}>
+                    {emp.name.slice(0,2).toUpperCase()}
+                  </div>
                 </div>
-                <div className="px-4 pb-4 -mt-6">
-                  <div className="flex items-end justify-between mb-3">
-                    <div className={cn("w-12 h-12 rounded-xl bg-gradient-to-br border-2 border-white dark:border-gray-900 flex items-center justify-center text-white font-bold text-sm shadow-md", gradient)}>
-                      {emp.name.slice(0,2).toUpperCase()}
-                    </div>
-                    <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 mb-1",
+                <div className="px-4 pb-4 pt-8">
+                  <div className="flex items-center justify-end mb-1">
+                    <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1",
                       isActive ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" : "bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400"
                     )}>
                       <span className={cn("w-1.5 h-1.5 rounded-full", isActive ? "bg-emerald-400 animate-pulse" : "bg-gray-400")} />
