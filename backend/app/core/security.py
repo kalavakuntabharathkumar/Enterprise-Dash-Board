@@ -26,7 +26,6 @@ def get_password_hash(password: str) -> str:
 def verify_password(plain_password: str, stored_hash: str) -> bool:
     try:
         if stored_hash.startswith("pbkdf2:"):
-            # Format: pbkdf2:sha256:260000$SALT$HASH
             prefix, salt, expected_hex = stored_hash.split("$", 2)
             _, algo, iters_str = prefix.split(":")
             iters = int(iters_str)
@@ -62,6 +61,15 @@ def get_current_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
+
+def get_admin_user(current_user=Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+    return current_user
 
 
 def get_optional_user(

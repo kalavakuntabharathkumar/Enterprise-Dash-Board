@@ -1,0 +1,499 @@
+Upgrade the existing Enterprise OS project into a REAL role-based enterprise SaaS MVP with proper authentication, authorization, employee access control, and real CRUD functionality.
+
+IMPORTANT:
+DO NOT rebuild the project from scratch.
+DO NOT redesign the UI.
+DO NOT remove existing mock/demo/fake data.
+DO NOT break current layouts or pages.
+
+This is an enhancement and architecture upgrade ONLY.
+
+Preserve:
+
+* current dashboard UI
+* existing Tailwind styling
+* shadcn components
+* charts
+* cards
+* layouts
+* animations
+* current module structure
+* existing demo data
+
+The existing demo/mock data should remain available as sample/fallback content until manually replaced later.
+
+====================================================
+PRIMARY OBJECTIVE
+=================
+
+Convert the current prototype dashboard into a semi-production-ready RBAC-based SaaS MVP.
+
+The current system behaves like:
+
+* shared admin dashboard
+* mostly static data
+* prototype interactions
+
+Convert it into:
+
+* real authentication system
+* role-based dashboard rendering
+* protected routes
+* admin vs employee access
+* dynamic CRUD functionality
+* real database-driven workflows
+
+WITHOUT deleting existing demo data.
+
+====================================================
+TECH STACK (KEEP EXISTING)
+==========================
+
+Frontend:
+
+* React
+* TypeScript
+* TailwindCSS
+* shadcn/ui
+* React Query
+* Zustand
+
+Backend:
+
+* FastAPI
+* SQLAlchemy
+* JWT Authentication
+
+Database:
+
+* SQLite
+
+====================================================
+IMPORTANT RBAC IMPLEMENTATION STRATEGY
+======================================
+
+Implement ONLY TWO ROLES initially:
+
+1. admin
+2. employee
+
+DO NOT implement complex multi-role enterprise RBAC yet.
+
+Reason:
+
+* stabilize authentication architecture first
+* avoid permission complexity
+* keep frontend maintainable
+* establish scalable RBAC foundation
+
+The architecture should still be expandable later for:
+
+* hr_admin
+* finance_manager
+* project_manager
+* crm_manager
+* team_lead
+
+But currently implement ONLY:
+
+* admin
+* employee
+
+====================================================
+DO NOT REMOVE EXISTING MOCK DATA
+================================
+
+Keep:
+
+* existing charts
+* analytics cards
+* mock tables
+* fake dashboard metrics
+* sample records
+
+Use them as:
+
+* seed data
+* fallback visuals
+* demo content
+
+If database data exists:
+
+* prioritize real database content
+
+If database is empty:
+
+* continue showing existing demo data
+
+====================================================
+IMPLEMENT REAL AUTHENTICATION
+=============================
+
+Create proper authentication system.
+
+Backend:
+
+* JWT login
+* hashed passwords
+* token verification
+* current-user endpoint
+* auth middleware
+
+Frontend:
+
+* login page
+* protected routes
+* persistent login
+* logout
+* auth store/context
+
+====================================================
+CREATE USERS TABLE
+==================
+
+users
+
+* id
+* full_name
+* email
+* password_hash
+* role
+* department_id
+* employee_id
+* created_at
+* updated_at
+* is_active
+
+departments
+
+* id
+* name
+* created_at
+
+====================================================
+ADMIN ROLE ACCESS
+=================
+
+Admin should have access to:
+
+* all modules
+* employee management
+* exports
+* attendance management
+* department creation
+* inventory management
+* CRM management
+* finance module
+* analytics
+* workflow automation
+* project creation
+* request approvals
+
+====================================================
+EMPLOYEE ROLE ACCESS
+====================
+
+Employee should ONLY access:
+
+* own dashboard
+* own attendance
+* own tasks
+* own projects
+* leave requests
+* notifications
+* profile
+
+Employees must NOT access:
+
+* exports
+* finance
+* analytics admin pages
+* department management
+* employee management
+* admin settings
+
+====================================================
+DYNAMIC SIDEBAR
+===============
+
+Sidebar should render based on role.
+
+====================================================
+ADMIN SIDEBAR
+=============
+
+Show:
+
+* Dashboard
+* HRMS
+* CRM
+* ERP
+* Finance
+* Analytics
+* Projects
+* Workflow Automation
+* Settings
+
+====================================================
+EMPLOYEE SIDEBAR
+================
+
+Show ONLY:
+
+* My Dashboard
+* Attendance
+* My Tasks
+* My Projects
+* Leave Requests
+* Profile
+
+====================================================
+PROTECTED ROUTES
+================
+
+Implement frontend and backend route protection.
+
+Admin-only examples:
+
+* /finance
+* /analytics
+* /employee-management
+
+Employee-only examples:
+
+* /my-dashboard
+* /my-attendance
+
+Unauthorized access:
+
+* redirect safely
+* show access denied UI
+
+====================================================
+REAL EMPLOYEE CRUD
+==================
+
+Keep current employee demo data visible.
+
+Enhance with:
+
+* Add Employee modal
+* Edit Employee
+* Delete Employee
+* Search employees
+* Filter employees
+* Real DB persistence
+
+Add Employee form:
+
+* full name
+* email
+* role
+* department
+* salary
+* join date
+* employee ID
+
+====================================================
+REAL DEPARTMENT MANAGEMENT
+==========================
+
+Make Add Department button functional.
+
+Features:
+
+* create department
+* edit department
+* delete department
+* assign employees to departments
+
+====================================================
+REAL ATTENDANCE SYSTEM
+======================
+
+Keep existing attendance visuals.
+
+Enhance with:
+
+* real check-in
+* real check-out
+* current timestamps
+* attendance history
+* total work hours
+* attendance status
+
+Employee dashboard should show:
+
+* today attendance
+* work hours
+* attendance state
+
+====================================================
+EXPORT FUNCTIONALITY
+====================
+
+Export buttons must work.
+
+ADMIN ONLY.
+
+Support:
+
+* CSV export
+* Excel export
+
+Export:
+
+* employees
+* attendance
+* projects
+* inventory
+* CRM leads
+
+====================================================
+CRM IMPROVEMENTS
+================
+
+Keep existing CRM UI design.
+
+Enhance with:
+
+* Add Lead
+* Add Contact
+* Create Deal
+* Update pipeline stage
+* DB persistence
+
+Pipeline stages:
+
+* Lead
+* Qualified
+* Proposal
+* Negotiation
+* Won
+* Lost
+
+====================================================
+PROJECT MANAGEMENT IMPROVEMENTS
+===============================
+
+Implement:
+
+* create project
+* assign employees
+* task management
+* task status
+* project progress
+
+Employees should only see assigned projects.
+
+====================================================
+ERP & INVENTORY IMPROVEMENTS
+============================
+
+Keep existing inventory demo visuals.
+
+Enhance with:
+
+* Add Vendor
+* Add Inventory Item
+* Purchase Orders
+* Stock updates
+* Inventory CRUD
+
+====================================================
+FINANCE MODULE IMPROVEMENTS
+===========================
+
+Keep finance dashboard visuals.
+
+Enhance with:
+
+* invoices
+* expenses
+* transactions
+* payment status
+* export support
+
+Finance must remain ADMIN ONLY.
+
+====================================================
+REAL-TIME UI UPDATES
+====================
+
+After CRUD operations:
+
+* refresh tables automatically
+* refresh cards
+* refresh charts
+* refresh analytics
+
+Use:
+
+* React Query invalidation
+* optimistic updates where appropriate
+
+====================================================
+ERROR HANDLING
+==============
+
+Implement:
+
+* loading states
+* form validation
+* API validation
+* toast notifications
+* error boundaries
+
+====================================================
+BACKEND AUTHORIZATION
+=====================
+
+Implement:
+
+* JWT middleware
+* role validation
+* protected endpoints
+* reusable auth dependencies
+
+====================================================
+DATABASE RELATIONSHIPS
+======================
+
+Implement proper SQLAlchemy relationships between:
+
+* users
+* departments
+* attendance
+* projects
+* tasks
+* CRM entities
+* inventory entities
+
+====================================================
+CODE QUALITY
+============
+
+Maintain:
+
+* reusable architecture
+* scalable structure
+* clean TypeScript types
+* reusable hooks
+* reusable API layer
+* modular backend structure
+
+====================================================
+FINAL RESULT
+============
+
+The final application should feel like:
+
+“A real enterprise SaaS MVP with working authentication, RBAC, protected admin/employee dashboards, dynamic CRUD functionality, and scalable enterprise architecture.”
+
+The app should still preserve:
+
+* existing premium UI
+* existing dashboard visuals
+* existing mock/demo content
+
+while upgrading functionality into a realistic SaaS workflow system.

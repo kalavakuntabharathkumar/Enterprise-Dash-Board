@@ -9,6 +9,7 @@ from app.api.routes import (
     invoices, expenses, projects, tasks, milestones,
     analytics, ai, workflows, notifications, users
 )
+from app.api.routes import export
 
 app = FastAPI(title="Enterprise OS API", version="1.0.0")
 
@@ -44,6 +45,7 @@ app.include_router(ai.router, prefix=API_PREFIX)
 app.include_router(workflows.router, prefix=API_PREFIX)
 app.include_router(notifications.router, prefix=API_PREFIX)
 app.include_router(users.router, prefix=API_PREFIX)
+app.include_router(export.router, prefix=API_PREFIX)
 
 
 @app.get("/api/healthz")
@@ -65,6 +67,12 @@ def startup():
         if db.query(models.User).count() == 0:
             admin = models.User(name="Alex Morgan", email="admin@enterpriseos.com", hashed_password=get_password_hash("admin123"), role="admin")
             db.add(admin)
+            db.flush()
+
+        # Seed employee user if missing (idempotent)
+        if not db.query(models.User).filter(models.User.email == "employee@enterpriseos.com").first():
+            emp_user = models.User(name="Jordan Lee", email="employee@enterpriseos.com", hashed_password=get_password_hash("employee123"), role="employee")
+            db.add(emp_user)
             db.flush()
 
         if db.query(models.Department).count() == 0:

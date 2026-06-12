@@ -3,6 +3,7 @@ import { useListDepartments } from "@workspace/api-client-react";
 import { Building2, Users, UserCheck, Plus, TrendingUp, ChevronRight, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { AddDepartmentModal } from "@/components/modals/AddDepartmentModal";
 
 const DEPT_THEMES: Record<string, { gradient: string; light: string; icon: string; accent: string }> = {
   Engineering:  { gradient: "from-indigo-500 to-violet-600",  light: "bg-indigo-50 dark:bg-indigo-500/10",  icon: "text-indigo-600 dark:text-indigo-400",  accent: "border-indigo-100 dark:border-indigo-500/20" },
@@ -20,6 +21,7 @@ const DEFAULT_THEME = { gradient: "from-gray-400 to-gray-600", light: "bg-gray-5
 export default function DepartmentsPage() {
   const { data: departments, isLoading } = useListDepartments();
   const [search, setSearch] = useState("");
+  const [showAddModal, setShowAddModal] = useState(false);
   const { toast } = useToast();
 
   const filtered = departments?.filter(d =>
@@ -52,7 +54,7 @@ export default function DepartmentsPage() {
           <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">Organizational structure across all teams.</p>
         </div>
         <button
-          onClick={() => toast({ title: "Add department", description: "Department form coming soon." })}
+          onClick={() => setShowAddModal(true)}
           className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg shadow-sm shadow-indigo-600/20 transition-colors"
         >
           <Plus className="w-4 h-4" /> Add Department
@@ -133,6 +135,7 @@ export default function DepartmentsPage() {
           })}
         </div>
       )}
+      <AddDepartmentModal open={showAddModal} onClose={() => setShowAddModal(false)} />
     </div>
   );
 }

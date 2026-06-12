@@ -5,8 +5,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/lib/auth";
 import { ThemeProvider } from "@/lib/theme";
+import { AdminGuard } from "@/components/RoleGuard";
 
 import LoginPage from "@/pages/login";
+import AccessDeniedPage from "@/pages/access-denied";
 import Dashboard from "@/pages/dashboard";
 import EmployeesPage from "@/pages/hrms";
 import EmployeeDetailPage from "@/pages/hrms/employees/[id]";
@@ -44,49 +46,58 @@ export default function App() {
             <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "")}>
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/access-denied" element={<AccessDeniedPage />} />
                 <Route path="/" element={<AppLayout />}>
                   <Route index element={<Navigate to="/dashboard" replace />} />
                   <Route path="dashboard" element={<Dashboard />} />
 
+                  {/* HRMS — admins only for management; leaves accessible to all */}
                   <Route path="hrms">
-                    <Route index element={<EmployeesPage />} />
-                    <Route path="employees/:id" element={<EmployeeDetailPage />} />
-                    <Route path="departments" element={<DepartmentsPage />} />
-                    <Route path="attendance" element={<AttendancePage />} />
+                    <Route index element={<AdminGuard><EmployeesPage /></AdminGuard>} />
+                    <Route path="employees/:id" element={<AdminGuard><EmployeeDetailPage /></AdminGuard>} />
+                    <Route path="departments" element={<AdminGuard><DepartmentsPage /></AdminGuard>} />
+                    <Route path="attendance" element={<AdminGuard><AttendancePage /></AdminGuard>} />
                     <Route path="leaves" element={<LeavesPage />} />
                   </Route>
 
+                  {/* CRM — admin only */}
                   <Route path="crm">
-                    <Route index element={<CRMPage />} />
-                    <Route path="leads" element={<LeadsPage />} />
-                    <Route path="contacts" element={<ContactsPage />} />
-                    <Route path="deals" element={<DealsKanbanPage />} />
+                    <Route index element={<AdminGuard><CRMPage /></AdminGuard>} />
+                    <Route path="leads" element={<AdminGuard><LeadsPage /></AdminGuard>} />
+                    <Route path="contacts" element={<AdminGuard><ContactsPage /></AdminGuard>} />
+                    <Route path="deals" element={<AdminGuard><DealsKanbanPage /></AdminGuard>} />
                   </Route>
 
+                  {/* ERP — admin only */}
                   <Route path="erp">
-                    <Route index element={<InventoryPage />} />
-                    <Route path="vendors" element={<VendorsPage />} />
-                    <Route path="purchases" element={<PurchasesPage />} />
+                    <Route index element={<AdminGuard><InventoryPage /></AdminGuard>} />
+                    <Route path="vendors" element={<AdminGuard><VendorsPage /></AdminGuard>} />
+                    <Route path="purchases" element={<AdminGuard><PurchasesPage /></AdminGuard>} />
                   </Route>
 
+                  {/* Finance — admin only */}
                   <Route path="finance">
-                    <Route index element={<FinanceDashboard />} />
-                    <Route path="invoices" element={<InvoicesPage />} />
-                    <Route path="expenses" element={<ExpensesPage />} />
+                    <Route index element={<AdminGuard><FinanceDashboard /></AdminGuard>} />
+                    <Route path="invoices" element={<AdminGuard><InvoicesPage /></AdminGuard>} />
+                    <Route path="expenses" element={<AdminGuard><ExpensesPage /></AdminGuard>} />
                   </Route>
 
+                  {/* Projects — accessible to all */}
                   <Route path="projects">
                     <Route index element={<ProjectsPage />} />
                     <Route path=":id" element={<ProjectDetailPage />} />
                   </Route>
 
-                  <Route path="analytics" element={<AnalyticsPage />} />
+                  {/* Analytics & Workflows — admin only */}
+                  <Route path="analytics" element={<AdminGuard><AnalyticsPage /></AdminGuard>} />
+                  <Route path="workflows" element={<AdminGuard><WorkflowsPage /></AdminGuard>} />
+
+                  {/* Accessible to all */}
                   <Route path="ai" element={<AiCopilotPage />} />
-                  <Route path="workflows" element={<WorkflowsPage />} />
                   <Route path="notifications" element={<NotificationsPage />} />
                   <Route path="settings" element={<SettingsPage />} />
 
-                  <Route path="*" element={<div className="p-8">Page under construction</div>} />
+                  <Route path="*" element={<div className="p-8 text-gray-500">Page not found</div>} />
                 </Route>
               </Routes>
             </BrowserRouter>

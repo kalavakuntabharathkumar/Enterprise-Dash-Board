@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import {
   Plus, DollarSign, TrendingUp, Target, Trophy,
   Calendar, Building2, MoreHorizontal, CheckCircle2,
-  XCircle, Clock, Layers, ArrowRight, Zap
+  XCircle, Clock, Layers, ArrowRight, Zap, Download
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth";
+import { AddDealModal } from "@/components/modals/AddDealModal";
 
 const STAGE_CONFIG: Record<string, {
   label: string; gradient: string; lightBg: string; border: string;
@@ -89,6 +91,8 @@ function DealCard({ deal, idx }: { deal: any; idx: number }) {
 
 export default function DealsKanbanPage() {
   const { data: deals, isLoading } = useListDeals();
+  const [showAddModal, setShowAddModal] = useState(false);
+  const { isAdmin } = useAuth();
   const { toast } = useToast();
 
   const dealsByStage = STAGES.reduce((acc, stage) => {
@@ -124,10 +128,18 @@ export default function DealsKanbanPage() {
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Deals Pipeline</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">Visualize and manage every deal across your sales stages.</p>
         </div>
-        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-600/20 gap-1.5"
-          onClick={() => toast({ title: "New deal", description: "Deal form coming soon." })}>
-          <Plus className="w-4 h-4" /> New Deal
-        </Button>
+        <div className="flex gap-2">
+          {isAdmin && (
+            <a href="/api/export/leads" download
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg hover:bg-gray-50 dark:hover:bg-white/10 transition-colors">
+              <Download className="w-3.5 h-3.5" /> Export CSV
+            </a>
+          )}
+          <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-600/20 gap-1.5"
+            onClick={() => setShowAddModal(true)}>
+            <Plus className="w-4 h-4" /> New Deal
+          </Button>
+        </div>
       </div>
 
       {/* KPIs */}
@@ -190,7 +202,7 @@ export default function DealsKanbanPage() {
               {/* Add button */}
               <div className="p-2.5 border-t border-gray-100 dark:border-white/5 flex-shrink-0">
                 <button
-                  onClick={() => toast({ title: "Add deal", description: "Deal form coming soon." })}
+                  onClick={() => setShowAddModal(true)}
                   className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-gray-200 dark:border-white/10 text-[11px] text-gray-400 hover:border-indigo-400 hover:text-indigo-500 transition-colors hover:bg-indigo-50/50 dark:hover:bg-indigo-500/5"
                 >
                   <Plus className="w-3 h-3" /> Add deal
@@ -200,6 +212,7 @@ export default function DealsKanbanPage() {
           );
         })}
       </div>
+      <AddDealModal open={showAddModal} onClose={() => setShowAddModal(false)} />
     </div>
   );
 }

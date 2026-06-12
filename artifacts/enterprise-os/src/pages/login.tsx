@@ -52,7 +52,7 @@ export default function LoginPage() {
       { data: values },
       {
         onSuccess: (data) => {
-          login(data.access_token);
+          login(data.access_token, data.user as any);
           toast({ title: "Welcome back", description: "Successfully signed in." });
           navigate("/dashboard");
         },

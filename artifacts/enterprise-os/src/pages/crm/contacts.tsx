@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import {
   Users, Search, Mail, Phone, Building2,
   UserPlus, Star, MessageSquare, Globe, LinkedinIcon, ExternalLink,
-  LayoutGrid, List, MoreHorizontal, MapPin, Briefcase
+  LayoutGrid, List, MoreHorizontal, MapPin, Briefcase, Download
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth";
+import { AddContactModal } from "@/components/modals/AddContactModal";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
@@ -23,8 +25,10 @@ type ViewMode = "grid" | "list";
 export default function ContactsPage() {
   const [search, setSearch] = useState("");
   const [view, setView] = useState<ViewMode>("grid");
+  const [showAddModal, setShowAddModal] = useState(false);
   const { data: contacts, isLoading } = useListContacts({ search: search || undefined });
   const { toast } = useToast();
+  const { isAdmin } = useAuth();
 
   const uniqueCompanies = new Set(contacts?.map(c => c.company).filter(Boolean)).size;
 
@@ -51,7 +55,7 @@ export default function ContactsPage() {
           <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">Your customer and partner directory.</p>
         </div>
         <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-600/20 gap-1.5"
-          onClick={() => toast({ title: "Add contact", description: "Contact form coming soon." })}>
+          onClick={() => setShowAddModal(true)}>
           <UserPlus className="w-4 h-4" /> Add Contact
         </Button>
       </div>
@@ -216,6 +220,7 @@ export default function ContactsPage() {
         </div>
       )}
       <p className="text-xs text-gray-400">{contacts?.length ?? 0} contact{(contacts?.length ?? 0) !== 1 ? "s" : ""}</p>
+      <AddContactModal open={showAddModal} onClose={() => setShowAddModal(false)} />
     </div>
   );
 }

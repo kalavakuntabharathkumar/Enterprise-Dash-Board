@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import {
   Users, Plus, Search, Mail, Phone, Building2,
   CheckCircle2, XCircle, Clock, UserPlus,
-  ChevronRight, MoreHorizontal, Filter
+  ChevronRight, MoreHorizontal, Filter, Download
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth";
+import { AddEmployeeModal } from "@/components/modals/AddEmployeeModal";
 
 const DEPT_COLORS: Record<string, string> = {
   Engineering:  "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400",
@@ -41,7 +43,9 @@ export default function EmployeesPage() {
   const [view, setView] = useState<ViewMode>("grid");
   const [filter, setFilter] = useState<FilterTab>("all");
   const [deptFilter, setDeptFilter] = useState("all");
+  const [showAddModal, setShowAddModal] = useState(false);
   const { toast } = useToast();
+  const { isAdmin } = useAuth();
 
   const filtered = employees?.filter(e => {
     const matchStatus = filter === "all" || e.status === filter;
@@ -80,12 +84,22 @@ export default function EmployeesPage() {
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Employees</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">Manage your workforce across all departments.</p>
         </div>
-        <Button
-          className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-600/20 gap-1.5"
-          onClick={() => toast({ title: "Add employee", description: "Employee form coming soon." })}
-        >
-          <UserPlus className="w-4 h-4" /> Add Employee
-        </Button>
+        <div className="flex gap-2">
+          {isAdmin && (
+            <a href="/api/export/employees" download
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg hover:bg-gray-50 dark:hover:bg-white/10 transition-colors">
+              <Download className="w-3.5 h-3.5" /> Export CSV
+            </a>
+          )}
+          {isAdmin && (
+            <Button
+              className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-600/20 gap-1.5"
+              onClick={() => setShowAddModal(true)}
+            >
+              <UserPlus className="w-4 h-4" /> Add Employee
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* KPIs */}
@@ -176,6 +190,8 @@ export default function EmployeesPage() {
         </div>
       )}
       <p className="text-xs text-gray-400">{filtered.length} employee{filtered.length !== 1 ? "s" : ""} shown</p>
+
+      <AddEmployeeModal open={showAddModal} onClose={() => setShowAddModal(false)} />
     </div>
   );
 }

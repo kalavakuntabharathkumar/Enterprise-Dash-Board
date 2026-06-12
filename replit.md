@@ -49,6 +49,22 @@ A complete enterprise SaaS platform — one command center for HR, CRM, ERP, Fin
 
 ## Product
 
+## RBAC System
+
+- **Admin role:** Full access to all 10 modules. Sees complete sidebar. Can add employees, departments, leads, contacts, deals. CSV export available on HRMS and CRM pages.
+- **Employee role:** Access to Dashboard, Notifications, Projects, Leave Requests, AI Copilot, Settings. Admin-only sections redirect to `/access-denied`.
+- `RoleGuard` / `AdminGuard` components wrap protected routes in App.tsx.
+- Auth context (`src/lib/auth.tsx`) stores `{token, user:{id,name,email,role}}` in localStorage; restores user on mount via `/api/auth/me`.
+- CSV export backend: `GET /api/export/employees|leads|attendance|contacts` (admin JWT required).
+
+## CRUD Modals
+
+- `src/components/modals/AddEmployeeModal.tsx` — wired to HRMS Employees page (admin only)
+- `src/components/modals/AddDepartmentModal.tsx` — wired to HRMS Departments page
+- `src/components/modals/AddLeadModal.tsx` — wired to CRM Leads page
+- `src/components/modals/AddContactModal.tsx` — wired to CRM Contacts page
+- `src/components/modals/AddDealModal.tsx` — wired to CRM Deals page (+ column "Add deal" buttons)
+
 10 fully wired modules:
 1. **Dashboard** — KPI cards, activity feed, revenue/expense charts
 2. **HRMS** — Employee directory, profiles, departments, attendance, leave management
@@ -63,8 +79,13 @@ A complete enterprise SaaS platform — one command center for HR, CRM, ERP, Fin
 
 ## Default credentials
 
+**Admin (full access):**
 - Email: `admin@enterpriseos.com`
 - Password: `admin123`
+
+**Employee (limited access):**
+- Email: `employee@enterpriseos.com`
+- Password: `employee123`
 
 ## User preferences
 

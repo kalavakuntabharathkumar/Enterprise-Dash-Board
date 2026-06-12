@@ -31,67 +31,49 @@ const pageTitles: Record<string, string> = {
 };
 
 function UserDropdown({ onClose }: { onClose: () => void }) {
-  const { logout } = useAuth();
+  const { logout, user, isAdmin } = useAuth();
   const navigate = useNavigate();
 
-  const handleNav = (path: string) => {
-    navigate(path);
-    onClose();
-  };
+  const initials = user?.name
+    ? user.name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()
+    : "?";
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-    onClose();
-  };
+  const handleNav = (path: string) => { navigate(path); onClose(); };
+  const handleLogout = () => { logout(); navigate("/login"); onClose(); };
 
   return (
     <div className="absolute top-full right-0 mt-2 w-56 bg-white dark:bg-[#0f1117] border border-gray-100 dark:border-white/10 rounded-xl shadow-xl z-50 overflow-hidden">
-      {/* User info */}
       <div className="px-4 py-3.5 border-b border-gray-50 dark:border-white/8">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
-            AM
+            {initials}
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">Alex Morgan</p>
-            <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">Administrator</p>
+            <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">{user?.name ?? "Loading..."}</p>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate capitalize">{isAdmin ? "Administrator" : "Employee"}</p>
           </div>
         </div>
       </div>
 
-      {/* Actions */}
       <div className="py-1.5">
-        <button
-          onClick={() => handleNav("/settings")}
-          className="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-        >
-          <User2 className="w-3.5 h-3.5 text-gray-400" />
-          View profile
+        <button onClick={() => handleNav("/settings")}
+          className="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+          <User2 className="w-3.5 h-3.5 text-gray-400" /> View profile
         </button>
-        <button
-          onClick={() => handleNav("/settings")}
-          className="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-        >
-          <Settings className="w-3.5 h-3.5 text-gray-400" />
-          Settings
+        <button onClick={() => handleNav("/settings")}
+          className="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+          <Settings className="w-3.5 h-3.5 text-gray-400" /> Settings
         </button>
-        <button
-          onClick={() => handleNav("/notifications")}
-          className="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-        >
-          <Bell className="w-3.5 h-3.5 text-gray-400" />
-          Notifications
+        <button onClick={() => handleNav("/notifications")}
+          className="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+          <Bell className="w-3.5 h-3.5 text-gray-400" /> Notifications
         </button>
       </div>
 
       <div className="border-t border-gray-50 dark:border-white/8 py-1.5">
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
-        >
-          <LogOut className="w-3.5 h-3.5" />
-          Sign out
+        <button onClick={handleLogout}
+          className="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors">
+          <LogOut className="w-3.5 h-3.5" /> Sign out
         </button>
       </div>
     </div>
@@ -99,7 +81,7 @@ function UserDropdown({ onClose }: { onClose: () => void }) {
 }
 
 export function AppLayout() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -118,12 +100,14 @@ export function AppLayout() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
 
   const title = pageTitles[location.pathname] || "Enterprise OS";
   const breadcrumbs = title.split(" — ");
+
+  const initials = user?.name
+    ? user.name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()
+    : "?";
 
   const SEARCH_SHORTCUTS = [
     { label: "Dashboard", path: "/dashboard" },
@@ -140,9 +124,7 @@ export function AppLayout() {
     <div className="flex min-h-screen bg-gray-50 dark:bg-background text-foreground">
       <Sidebar />
       <div className="flex-1 ml-64 flex flex-col min-h-screen">
-        {/* Top bar */}
         <header className="sticky top-0 z-30 bg-white dark:bg-[#080c14] border-b border-gray-100 dark:border-white/5 px-8 py-3 flex items-center justify-between">
-          {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
             {breadcrumbs.map((crumb, i) => (
               <React.Fragment key={i}>
@@ -150,15 +132,12 @@ export function AppLayout() {
                 <span className={i === breadcrumbs.length - 1
                   ? "text-gray-800 dark:text-white font-semibold text-sm"
                   : "text-gray-500 dark:text-gray-500 text-sm"
-                }>
-                  {crumb}
-                </span>
+                }>{crumb}</span>
               </React.Fragment>
             ))}
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Search */}
             <div className="relative">
               <button
                 onClick={() => setShowSearch(v => !v)}
@@ -173,13 +152,9 @@ export function AppLayout() {
                 <div className="absolute top-full right-0 mt-2 w-72 bg-white dark:bg-[#0f1117] border border-gray-100 dark:border-white/10 rounded-xl shadow-xl z-50 overflow-hidden">
                   <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-50 dark:border-white/8">
                     <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                    <input
-                      autoFocus
-                      value={searchQuery}
-                      onChange={e => setSearchQuery(e.target.value)}
+                    <input autoFocus value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                       placeholder="Search pages..."
-                      className="flex-1 text-sm bg-transparent text-gray-800 dark:text-white placeholder:text-gray-400 outline-none"
-                    />
+                      className="flex-1 text-sm bg-transparent text-gray-800 dark:text-white placeholder:text-gray-400 outline-none" />
                     <button onClick={() => setShowSearch(false)} className="text-gray-400 hover:text-gray-600">
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -188,11 +163,9 @@ export function AppLayout() {
                     {SEARCH_SHORTCUTS.length === 0 ? (
                       <p className="px-4 py-3 text-xs text-gray-400">No results found</p>
                     ) : SEARCH_SHORTCUTS.map(s => (
-                      <button
-                        key={s.path}
+                      <button key={s.path}
                         onClick={() => { navigate(s.path); setShowSearch(false); setSearchQuery(""); }}
-                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left"
-                      >
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left">
                         <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
                         {s.label}
                       </button>
@@ -202,28 +175,18 @@ export function AppLayout() {
               )}
             </div>
 
-            {/* Dark mode toggle */}
-            <button
-              onClick={toggleTheme}
+            <button onClick={toggleTheme}
               className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            >
-              {theme === "dark"
-                ? <Sun className="w-3.5 h-3.5 text-amber-400" />
-                : <Moon className="w-3.5 h-3.5 text-gray-500" />
-              }
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}>
+              {theme === "dark" ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-gray-500" />}
             </button>
 
-            {/* Notifications */}
-            <button
-              onClick={() => navigate("/notifications")}
-              className="relative w-8 h-8 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-            >
+            <button onClick={() => navigate("/notifications")}
+              className="relative w-8 h-8 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
               <Bell className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
               <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-indigo-500 rounded-full" />
             </button>
 
-            {/* Avatar + dropdown */}
             <div className="relative" ref={userMenuRef}>
               <button
                 onClick={() => setShowUserMenu(v => !v)}
@@ -232,14 +195,13 @@ export function AppLayout() {
                   showUserMenu ? "ring-indigo-400 ring-offset-1 ring-offset-white dark:ring-offset-gray-900" : "ring-transparent"
                 )}
               >
-                AM
+                {initials}
               </button>
               {showUserMenu && <UserDropdown onClose={() => setShowUserMenu(false)} />}
             </div>
           </div>
         </header>
 
-        {/* Page content */}
         <main className="flex-1 p-8">
           <Outlet />
         </main>

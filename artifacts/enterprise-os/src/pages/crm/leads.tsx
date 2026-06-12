@@ -3,10 +3,12 @@ import { useListLeads } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import {
   Target, Search, Plus, DollarSign, Star, Mail,
-  Building2, ArrowUpRight, Flame, TrendingUp, Filter, ChevronDown
+  Building2, ArrowUpRight, Flame, TrendingUp, Filter, ChevronDown, Download
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth";
+import { AddLeadModal } from "@/components/modals/AddLeadModal";
 
 const STAGE_CONFIG: Record<string, { label: string; color: string; step: number; barColor: string; dot: string }> = {
   prospect:    { label: "Prospect",    color: "bg-gray-100 text-gray-600 dark:bg-white/8 dark:text-gray-400",                     step: 1, barColor: "bg-gray-300 dark:bg-white/20",  dot: "bg-gray-400" },
@@ -25,8 +27,10 @@ const STAGES = ["all","prospect","contacted","qualified","proposal","negotiation
 export default function LeadsPage() {
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState("all");
+  const [showAddModal, setShowAddModal] = useState(false);
   const { data: leads, isLoading } = useListLeads({ search: search || undefined });
   const { toast } = useToast();
+  const { isAdmin } = useAuth();
 
   const filtered = leads?.filter(l => stageFilter === "all" || l.stage === stageFilter) ?? [];
   const totalValue = leads?.reduce((s, l) => s + (l.value || 0), 0) ?? 0;
@@ -57,7 +61,7 @@ export default function LeadsPage() {
           <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">Track prospects through every stage of your sales funnel.</p>
         </div>
         <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-600/20 gap-1.5"
-          onClick={() => toast({ title: "Add lead", description: "Lead form coming soon." })}>
+          onClick={() => setShowAddModal(true)}>
           <Plus className="w-4 h-4" /> Add Lead
         </Button>
       </div>
@@ -206,6 +210,7 @@ export default function LeadsPage() {
           <p className="text-xs text-gray-400">{filtered.length} lead{filtered.length !== 1 ? "s" : ""} {stageFilter !== "all" ? `in ${stageFilter}` : "total"}</p>
         </div>
       </div>
+      <AddLeadModal open={showAddModal} onClose={() => setShowAddModal(false)} />
     </div>
   );
 }
