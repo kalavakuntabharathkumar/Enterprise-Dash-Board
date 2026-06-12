@@ -1,0 +1,1 @@
+- [Enterprise OS backend quirks](enterprise-os-backend.md) — passlib/bcrypt incompatibility, ENTERPRISE_DB_URL, custom-fetch export, Python FastAPI replacing Node api-server

@@ -1,0 +1,455 @@
+Build a complete modern full-stack enterprise SaaS prototype called “Enterprise OS — Unified Enterprise Operating System” using the provided Figma design as the primary UI/UX reference.
+
+IMPORTANT:
+Strictly follow the Figma design for:
+
+* layout
+* spacing
+* typography
+* sidebar
+* navbar
+* cards
+* dashboards
+* tables
+* colors
+* responsiveness
+* UI structure
+* visual hierarchy
+* component styling
+
+Use the Figma design as the visual source of truth while building the application.
+
+==================================================
+PROJECT TYPE
+============
+
+This project is an architecture and functional prototype of a unified enterprise operating system.
+
+Focus on:
+
+* enterprise dashboard experience
+* modular architecture
+* reusable components
+* responsive UI
+* integrated modules
+* clean CRUD flows
+* AI-assisted enterprise workflows
+* scalable frontend structure
+* clean backend organization
+* modern enterprise SaaS aesthetics
+
+IMPORTANT:
+Do NOT overengineer.
+Do NOT build production-scale infrastructure.
+
+Avoid:
+
+* microservices
+* Docker
+* Kubernetes
+* Redis
+* Celery
+* event-driven systems
+* advanced AI memory systems
+* complex ERP logic
+* enterprise-scale accounting systems
+* multi-tenant architecture
+
+The focus should remain on:
+
+* clean architecture
+* working functionality
+* polished UI
+* enterprise experience
+* modular prototype implementation
+
+==================================================
+TECH STACK
+==========
+
+Frontend:
+
+* React.js
+* TypeScript
+* Vite
+* Tailwind CSS
+* Shadcn UI
+
+Frontend Libraries:
+
+* React Router DOM
+* Axios
+* TanStack React Query
+* Zustand
+* React Hook Form
+* Zod
+* Recharts
+* Lucide React
+* Date-fns
+* React Hot Toast
+
+Backend:
+
+* Python
+* FastAPI
+* SQLAlchemy
+* SQLite
+* Pydantic
+* Python-Jose
+* Passlib + Bcrypt
+* Alembic
+* Python-dotenv
+
+Authentication:
+
+* JWT Authentication
+* Protected Routes
+* Basic Role-Based Access
+
+AI Stack:
+Primary:
+
+* OpenRouter API
+
+Fallback:
+
+* Gemini API
+
+AI Models:
+
+* DeepSeek Chat
+* Qwen
+* Gemini Flash
+
+==================================================
+PROJECT STRUCTURE
+=================
+
+Create:
+
+/frontend
+/backend
+
+Frontend structure:
+
+/src
+/components
+/layouts
+/modules
+/pages
+/hooks
+/services
+/store
+/types
+/lib
+
+Backend structure:
+
+/app
+/api
+/models
+/schemas
+/routes
+/services
+/core
+/database
+/utils
+
+==================================================
+MODULES TO BUILD
+================
+
+1. Dashboard
+
+* KPI cards
+* Analytics widgets
+* Charts
+* Recent activity
+* Quick actions
+* Notifications panel
+
+2. HRMS
+
+* Employee management
+* Employee table
+* Employee profile page
+* Attendance overview
+* Leave management
+* Department management
+
+3. CRM
+
+* Lead management
+* Contacts table
+* Sales pipeline
+* Deal tracking
+* CRM dashboard
+* Customer activity tracking
+
+4. ERP
+
+* Inventory management
+* Product table
+* Vendor management
+* Stock overview
+* Purchase records
+
+5. Finance
+
+* Invoice management
+* Expense tracking
+* Revenue overview
+* Finance dashboard
+* Budget summary
+
+6. Projects
+
+* Task management
+* Kanban board
+* Timeline view
+* Milestones
+* Team tasks
+* Deadline tracking
+
+7. Analytics
+
+* Charts
+* KPI analytics
+* Department statistics
+* Business reports
+* Dashboard insights
+
+8. AI Copilot
+
+* Enterprise AI chat assistant
+* Suggested prompts
+* AI insights cards
+* Business summary generation
+* Department-based AI support
+
+9. Workflow Automation
+
+* Workflow cards
+* Trigger simulation
+* Notifications
+* Status-based actions
+* Automation activity feed
+
+10. Settings
+
+* Profile settings
+* Theme settings
+* Preferences
+* User management basics
+
+==================================================
+DESIGN SYSTEM REQUIREMENTS
+==========================
+
+Create reusable:
+
+* Sidebar
+* Navbar
+* DashboardCard
+* StatCard
+* DataTable
+* FormModal
+* PageHeader
+* ChartCard
+* AnalyticsWidget
+* KanbanCard
+* NotificationPanel
+
+Maintain:
+
+* consistent spacing
+* reusable cards
+* reusable forms
+* reusable tables
+* reusable chart styles
+* reusable modal patterns
+* unified enterprise design language
+
+Design Style:
+
+* Linear inspired
+* Stripe inspired
+* Notion inspired
+* Monday.com inspired
+* Modern enterprise SaaS aesthetics
+
+UI Requirements:
+
+* Dark sidebar
+* Light content area
+* Modern cards
+* Clean typography
+* Responsive layout
+* Professional analytics visuals
+* Smooth user experience
+
+==================================================
+BACKEND REQUIREMENTS
+====================
+
+Build modular FastAPI architecture.
+
+Implement:
+
+* SQLAlchemy models
+* CRUD APIs
+* JWT auth structure
+* SQLite database integration
+* Service layer architecture
+* RESTful endpoints
+* Modular route organization
+* Validation using Pydantic
+
+Create backend models for:
+
+* users
+* employees
+* departments
+* leads
+* contacts
+* products
+* vendors
+* invoices
+* expenses
+* projects
+* tasks
+* notifications
+
+==================================================
+AI COPILOT REQUIREMENTS
+=======================
+
+Build:
+
+* AI chat interface
+* FastAPI AI endpoint
+* OpenRouter integration
+* Gemini fallback support
+* Department-specific AI prompts
+* AI response cards
+* Smart insights UI
+
+Example AI capabilities:
+
+* summarize reports
+* analyze sales
+* generate employee insights
+* explain analytics
+* summarize tasks
+* generate business summaries
+
+AI Flow:
+Frontend Chat UI
+→ FastAPI AI Endpoint
+→ OpenRouter API
+→ Gemini API fallback
+
+==================================================
+FIGMA INTERACTION IMPLEMENTATION
+================================
+
+Some buttons, actions, forms, navigation flows, and UI interactions in the Figma design may be static or partially non-functional prototype elements.
+
+While building the application:
+
+1. Identify all non-working or placeholder UI interactions from the Figma design.
+
+2. Convert them into real working application functionality.
+
+3. Ensure all major buttons and actions are connected properly.
+
+Examples:
+
+* sidebar navigation
+* dashboard actions
+* add/edit/delete actions
+* form submissions
+* modal open/close actions
+* table actions
+* workflow actions
+* AI chat interactions
+* settings actions
+
+4. Replace placeholder prototype interactions with real React functionality and proper application flow.
+
+5. Maintain the original UI/UX design while making the application fully interactive and functional.
+
+6. Ensure all navigation routes, pages, forms, cards, and dashboard interactions work correctly throughout the application.
+
+==================================================
+IMPORTANT DEVELOPMENT RULES
+===========================
+
+1. Follow the Figma design closely.
+
+2. Build reusable scalable components.
+
+3. Use clean modular architecture.
+
+4. Keep the UI polished and enterprise-grade.
+
+5. Focus on prototype functionality, not enterprise-scale complexity.
+
+6. Avoid unnecessary backend complexity.
+
+7. Use mock/sample data where appropriate.
+
+8. Ensure all routes and pages are connected properly.
+
+9. Make the application responsive.
+
+10. Prioritize clean architecture and user experience.
+
+11. Build reusable CRUD patterns across modules.
+
+12. Keep the codebase organized and scalable.
+
+13. Use TypeScript properly with reusable types and interfaces.
+
+14. Ensure frontend and backend integration works cleanly.
+
+==================================================
+INITIAL DEVELOPMENT PRIORITY
+============================
+
+FIRST:
+
+* frontend foundation
+* sidebar
+* navbar
+* dashboard shell
+* routing
+* reusable components
+* auth pages
+
+THEN:
+
+* module pages
+* CRUD flows
+* charts
+* backend APIs
+* AI copilot
+* workflow demo
+
+==================================================
+FINAL GOAL
+==========
+
+Build a polished, modern, responsive, enterprise-grade unified operating system prototype that demonstrates:
+
+* integrated enterprise modules
+* reusable architecture
+* modern SaaS UI
+* clean backend organization
+* AI-assisted workflows
+* analytics dashboards
+* responsive enterprise experience
+* working CRUD functionality
+* modular scalable architecture
+
+The final result should feel like a real next-generation enterprise operating system prototype suitable for demonstrating enterprise SaaS architecture, modern UI systems, AI integration, and unified business workflows.
