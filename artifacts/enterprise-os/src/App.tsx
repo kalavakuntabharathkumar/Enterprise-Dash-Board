@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/lib/auth";
+import { ThemeProvider } from "@/lib/theme";
 
 import LoginPage from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
@@ -38,58 +39,60 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <AuthProvider>
-          <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Routes>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/" element={<AppLayout />}>
-                <Route index element={<Navigate to="/dashboard" replace />} />
-                <Route path="dashboard" element={<Dashboard />} />
-                
-                <Route path="hrms">
-                  <Route index element={<EmployeesPage />} />
-                  <Route path="employees/:id" element={<EmployeeDetailPage />} />
-                  <Route path="departments" element={<DepartmentsPage />} />
-                  <Route path="attendance" element={<AttendancePage />} />
-                  <Route path="leaves" element={<LeavesPage />} />
-                </Route>
+        <ThemeProvider>
+          <AuthProvider>
+            <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/" element={<AppLayout />}>
+                  <Route index element={<Navigate to="/dashboard" replace />} />
+                  <Route path="dashboard" element={<Dashboard />} />
 
-                <Route path="crm">
-                  <Route index element={<CRMPage />} />
-                  <Route path="leads" element={<LeadsPage />} />
-                  <Route path="contacts" element={<ContactsPage />} />
-                  <Route path="deals" element={<DealsKanbanPage />} />
-                </Route>
+                  <Route path="hrms">
+                    <Route index element={<EmployeesPage />} />
+                    <Route path="employees/:id" element={<EmployeeDetailPage />} />
+                    <Route path="departments" element={<DepartmentsPage />} />
+                    <Route path="attendance" element={<AttendancePage />} />
+                    <Route path="leaves" element={<LeavesPage />} />
+                  </Route>
 
-                <Route path="erp">
-                  <Route index element={<InventoryPage />} />
-                  <Route path="vendors" element={<VendorsPage />} />
-                  <Route path="purchases" element={<PurchasesPage />} />
-                </Route>
+                  <Route path="crm">
+                    <Route index element={<CRMPage />} />
+                    <Route path="leads" element={<LeadsPage />} />
+                    <Route path="contacts" element={<ContactsPage />} />
+                    <Route path="deals" element={<DealsKanbanPage />} />
+                  </Route>
 
-                <Route path="finance">
-                  <Route index element={<FinanceDashboard />} />
-                  <Route path="invoices" element={<InvoicesPage />} />
-                  <Route path="expenses" element={<ExpensesPage />} />
-                </Route>
+                  <Route path="erp">
+                    <Route index element={<InventoryPage />} />
+                    <Route path="vendors" element={<VendorsPage />} />
+                    <Route path="purchases" element={<PurchasesPage />} />
+                  </Route>
 
-                <Route path="projects">
-                  <Route index element={<ProjectsPage />} />
-                  <Route path=":id" element={<ProjectDetailPage />} />
-                </Route>
+                  <Route path="finance">
+                    <Route index element={<FinanceDashboard />} />
+                    <Route path="invoices" element={<InvoicesPage />} />
+                    <Route path="expenses" element={<ExpensesPage />} />
+                  </Route>
 
-                <Route path="analytics" element={<AnalyticsPage />} />
-                <Route path="ai" element={<AiCopilotPage />} />
-                <Route path="workflows" element={<WorkflowsPage />} />
-                <Route path="notifications" element={<NotificationsPage />} />
-                <Route path="settings" element={<SettingsPage />} />
-                
-                <Route path="*" element={<div className="p-8">Page under construction</div>} />
-              </Route>
-            </Routes>
-          </BrowserRouter>
-          <Toaster />
-        </AuthProvider>
+                  <Route path="projects">
+                    <Route index element={<ProjectsPage />} />
+                    <Route path=":id" element={<ProjectDetailPage />} />
+                  </Route>
+
+                  <Route path="analytics" element={<AnalyticsPage />} />
+                  <Route path="ai" element={<AiCopilotPage />} />
+                  <Route path="workflows" element={<WorkflowsPage />} />
+                  <Route path="notifications" element={<NotificationsPage />} />
+                  <Route path="settings" element={<SettingsPage />} />
+
+                  <Route path="*" element={<div className="p-8">Page under construction</div>} />
+                </Route>
+              </Routes>
+            </BrowserRouter>
+            <Toaster />
+          </AuthProvider>
+        </ThemeProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
