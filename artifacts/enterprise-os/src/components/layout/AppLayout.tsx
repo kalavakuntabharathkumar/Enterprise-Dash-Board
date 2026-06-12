@@ -28,6 +28,15 @@ const pageTitles: Record<string, string> = {
   "/workflows": "Workflows",
   "/notifications": "Notifications",
   "/settings": "Settings",
+  "/my-leaves": "My Leaves",
+  "/payslips": "Payslips & Salary",
+  "/profile": "My Profile",
+  "/announcements": "Announcements",
+  "/directory": "Team Directory",
+  "/timesheets": "Timesheets",
+  "/support": "Support & Requests",
+  "/documents": "Document Center",
+  "/calendar": "Calendar",
 };
 
 function UserDropdown({ onClose }: { onClose: () => void }) {

@@ -33,6 +33,16 @@ import WorkflowsPage from "@/pages/workflows";
 import NotificationsPage from "@/pages/notifications";
 import SettingsPage from "@/pages/settings";
 
+import MyLeavesPage from "@/pages/my-leaves";
+import PayslipsPage from "@/pages/payslips";
+import ProfilePage from "@/pages/profile";
+import AnnouncementsPage from "@/pages/announcements";
+import DirectoryPage from "@/pages/directory";
+import TimesheetsPage from "@/pages/timesheets";
+import SupportPage from "@/pages/support";
+import DocumentsPage from "@/pages/documents";
+import CalendarPage from "@/pages/calendar";
+
 import { AppLayout } from "@/components/layout/AppLayout";
 
 const queryClient = new QueryClient();
@@ -96,6 +106,17 @@ export default function App() {
                   <Route path="ai" element={<AiCopilotPage />} />
                   <Route path="notifications" element={<NotificationsPage />} />
                   <Route path="settings" element={<SettingsPage />} />
+
+                  {/* New employee experience modules — accessible to all */}
+                  <Route path="my-leaves" element={<MyLeavesPage />} />
+                  <Route path="payslips" element={<PayslipsPage />} />
+                  <Route path="profile" element={<ProfilePage />} />
+                  <Route path="announcements" element={<AnnouncementsPage />} />
+                  <Route path="directory" element={<DirectoryPage />} />
+                  <Route path="timesheets" element={<TimesheetsPage />} />
+                  <Route path="support" element={<SupportPage />} />
+                  <Route path="documents" element={<DocumentsPage />} />
+                  <Route path="calendar" element={<CalendarPage />} />
 
                   <Route path="*" element={<div className="p-8 text-gray-500">Page not found</div>} />
                 </Route>

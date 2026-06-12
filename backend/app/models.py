@@ -216,3 +216,81 @@ class Workflow(Base):
     runs = Column(Integer, default=0)
     last_run = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+# ── NEW MODELS ────────────────────────────────────────────────────────────────
+
+class Payslip(Base):
+    __tablename__ = "payslips"
+    id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
+    month = Column(String, nullable=False)
+    salary = Column(Float, nullable=False)
+    deductions = Column(Float, default=0)
+    bonus = Column(Float, default=0)
+    final_amount = Column(Float, nullable=False)
+    status = Column(String, default="paid")
+    generated_at = Column(DateTime, default=datetime.utcnow)
+
+
+class EmployeeProfile(Base):
+    __tablename__ = "employee_profiles"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    phone = Column(String, nullable=True)
+    address = Column(Text, nullable=True)
+    emergency_contact = Column(String, nullable=True)
+    emergency_phone = Column(String, nullable=True)
+    skills = Column(Text, nullable=True)
+    bio = Column(Text, nullable=True)
+    updated_at = Column(DateTime, default=datetime.utcnow)
+
+
+class Announcement(Base):
+    __tablename__ = "announcements"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    content = Column(Text, nullable=False)
+    type = Column(String, default="general")
+    pinned = Column(Boolean, default=False)
+    created_by = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class Timesheet(Base):
+    __tablename__ = "timesheets"
+    id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)
+    date = Column(String, nullable=False)
+    hours = Column(Float, nullable=False)
+    description = Column(Text, nullable=True)
+    billable = Column(Boolean, default=True)
+    status = Column(String, default="pending")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class SupportRequest(Base):
+    __tablename__ = "support_requests"
+    id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
+    request_type = Column(String, nullable=False)
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=False)
+    status = Column(String, default="open")
+    priority = Column(String, default="medium")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)
+
+
+class Document(Base):
+    __tablename__ = "documents"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    doc_type = Column(String, nullable=False)
+    filename = Column(String, nullable=False)
+    size_kb = Column(Integer, default=0)
+    uploaded_by = Column(String, nullable=True)
+    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=True)
+    is_company_doc = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)

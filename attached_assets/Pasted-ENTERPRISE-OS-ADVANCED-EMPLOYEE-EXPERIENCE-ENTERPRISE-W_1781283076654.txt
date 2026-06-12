@@ -1,0 +1,559 @@
+ENTERPRISE OS — ADVANCED EMPLOYEE EXPERIENCE & ENTERPRISE WORKFLOW EXPANSION
+
+IMPORTANT:
+This is an EXTENSION of the existing Enterprise OS architecture.
+
+DO NOT:
+
+* redesign UI
+* remove current pages
+* replace layouts
+* remove existing functionality
+* break admin architecture
+* collapse routing
+* overwrite existing modules
+
+Preserve:
+
+* current visual design
+* existing dashboards
+* Tailwind styling
+* shadcn components
+* charts
+* cards
+* existing demo data
+* current responsiveness
+
+This update should EXTEND the employee experience and make the system feel like a realistic enterprise SaaS platform.
+
+====================================================
+PRIMARY GOAL
+============
+
+Transform the Employee Portal into a REAL enterprise employee self-service workspace while preserving the existing admin + employee RBAC architecture.
+
+The system should now feel like:
+
+* employees actually use the platform daily
+* workflows feel real
+* internal operations feel realistic
+* enterprise interactions feel alive
+
+====================================================
+KEEP CURRENT RBAC
+=================
+
+Preserve existing:
+
+* admin role
+* employee role
+* protected routes
+* sidebar logic
+* route guards
+
+DO NOT rebuild RBAC architecture.
+
+ONLY expand employee functionality safely.
+
+====================================================
+EMPLOYEE DASHBOARD EXPANSION
+============================
+
+Enhance employee dashboard with:
+
+* personalized welcome section
+* attendance summary
+* upcoming tasks
+* assigned projects
+* leave balance
+* notifications
+* deadlines
+* recent activities
+* announcements
+* work progress cards
+
+Dashboard should feel:
+
+* personalized
+* interactive
+* realistic
+* enterprise-grade
+
+====================================================
+LEAVE MANAGEMENT SYSTEM
+=======================
+
+Create complete leave management workflow.
+
+Employee Features:
+
+* Apply Leave
+* View Leave Balance
+* View Leave History
+* Cancel Leave Request
+* View Approval Status
+
+Leave Types:
+
+* Sick Leave
+* Casual Leave
+* Paid Leave
+* Work From Home
+
+Admin Features:
+
+* Approve Leave
+* Reject Leave
+* View Leave Analytics
+
+Database:
+leave_requests
+
+* id
+* employee_id
+* leave_type
+* start_date
+* end_date
+* reason
+* status
+* created_at
+
+Statuses:
+
+* pending
+* approved
+* rejected
+
+====================================================
+PAYSLIP & SALARY MODULE
+=======================
+
+Employee Features:
+
+* View Payslips
+* Download Payslips
+* View Salary History
+* View Deductions
+* View Payment Status
+
+Admin Features:
+
+* Upload Payslips
+* Manage Salary Records
+
+Database:
+payslips
+
+* id
+* employee_id
+* month
+* salary
+* deductions
+* bonus
+* final_amount
+* generated_at
+
+====================================================
+ADVANCED TASK MANAGEMENT
+========================
+
+Enhance project/task workflows.
+
+Employee Features:
+
+* Update Task Status
+* Add Task Comments
+* Upload Task Attachments
+* Mark Tasks Complete
+* View Deadlines
+* View Task Priority
+
+Task Status:
+
+* pending
+* in_progress
+* completed
+* blocked
+
+Task Priority:
+
+* low
+* medium
+* high
+* urgent
+
+Database:
+tasks
+
+* id
+* project_id
+* assigned_to
+* title
+* description
+* status
+* priority
+* due_date
+* created_at
+
+====================================================
+PROJECT COLLABORATION FEATURES
+==============================
+
+Employee Features:
+
+* View Team Members
+* View Project Timeline
+* Upload Deliverables
+* Add Project Comments
+* View Progress Tracking
+
+Admin Features:
+
+* Assign Team Members
+* Manage Milestones
+* Track Team Performance
+
+====================================================
+EMPLOYEE PROFILE SYSTEM
+=======================
+
+Create advanced employee profile management.
+
+Employee Features:
+
+* Edit Profile
+* Upload Profile Photo
+* Update Contact Information
+* Change Password
+* Add Emergency Contact
+* Update Skills
+* Add Bio/About Section
+
+Database:
+employee_profiles
+
+* id
+* user_id
+* phone
+* address
+* emergency_contact
+* profile_photo
+* skills
+* bio
+
+====================================================
+NOTIFICATION SYSTEM
+===================
+
+Create real notification architecture.
+
+Employees receive:
+
+* task assignments
+* leave approvals
+* attendance reminders
+* announcements
+* project updates
+* deadline reminders
+
+Admin receives:
+
+* leave requests
+* workflow alerts
+* employee activity alerts
+
+Database:
+notifications
+
+* id
+* user_id
+* title
+* message
+* type
+* is_read
+* created_at
+
+====================================================
+COMPANY ANNOUNCEMENTS
+=====================
+
+Admin Features:
+
+* Create Announcements
+* Pin Important Notices
+* Schedule Announcements
+
+Employee Features:
+
+* View Announcements
+* Mark As Read
+
+Types:
+
+* holidays
+* meetings
+* HR updates
+* company news
+
+====================================================
+DOCUMENT CENTER
+===============
+
+Employee Features:
+
+* Upload Documents
+* Download Files
+* View HR Documents
+* View Contracts
+* Download Payslips
+
+Admin Features:
+
+* Upload Company Policies
+* Upload Employee Documents
+
+Supported Documents:
+
+* ID Proofs
+* Certificates
+* Offer Letters
+* Contracts
+* Policies
+
+====================================================
+EMPLOYEE PERFORMANCE DASHBOARD
+==============================
+
+Employee Features:
+
+* View Productivity
+* Attendance Percentage
+* Completed Tasks
+* Monthly Performance
+* KPI Metrics
+
+Admin Features:
+
+* Team Performance Analytics
+* Employee Activity Monitoring
+
+====================================================
+CALENDAR SYSTEM
+===============
+
+Create enterprise calendar functionality.
+
+Employees can view:
+
+* deadlines
+* meetings
+* leave dates
+* attendance history
+* holidays
+* project milestones
+
+Admin can:
+
+* create company events
+* manage holidays
+
+====================================================
+TEAM DIRECTORY
+==============
+
+Create employee directory.
+
+Employees can:
+
+* search coworkers
+* view departments
+* view employee profiles
+* contact team members
+
+Admin can:
+
+* manage directory visibility
+
+====================================================
+TIMESHEET SYSTEM
+================
+
+Employee Features:
+
+* Log Working Hours
+* Weekly Timesheets
+* Billable Hours
+* Submit Timesheets
+
+Admin Features:
+
+* Approve Timesheets
+* View Team Hours
+
+Database:
+timesheets
+
+* id
+* employee_id
+* project_id
+* hours
+* date
+* description
+
+====================================================
+SUPPORT / REQUEST SYSTEM
+========================
+
+Employees can submit:
+
+* IT Requests
+* HR Requests
+* Asset Requests
+* Reimbursement Requests
+
+Admin can:
+
+* approve
+* reject
+* track requests
+
+Database:
+support_requests
+
+* id
+* employee_id
+* request_type
+* description
+* status
+* created_at
+
+====================================================
+FILE UPLOAD SUPPORT
+===================
+
+Implement safe file upload system.
+
+Support:
+
+* profile photos
+* documents
+* attachments
+* deliverables
+
+Use:
+
+* secure upload validation
+* file size limits
+* proper storage structure
+
+====================================================
+REAL-TIME UI UPDATES
+====================
+
+After updates:
+
+* refresh dashboards
+* refresh notifications
+* refresh tasks
+* refresh attendance
+* refresh project data
+
+Use:
+
+* React Query invalidation
+* loading states
+* optimistic updates carefully
+
+====================================================
+KEEP EXISTING MOCK DATA
+=======================
+
+IMPORTANT:
+Do NOT remove:
+
+* current charts
+* current cards
+* current demo records
+* current analytics
+
+Existing demo data should remain as:
+
+* showcase content
+* fallback visuals
+* initial seed data
+
+====================================================
+ERROR HANDLING
+==============
+
+Implement:
+
+* toast notifications
+* validation
+* loading states
+* empty states
+* upload error handling
+* API error handling
+
+Prevent:
+
+* crashes
+* undefined rendering
+* broken dashboards
+
+====================================================
+RESPONSIVE DESIGN
+=================
+
+Maintain:
+
+* existing responsiveness
+* mobile compatibility
+* tablet layouts
+* desktop layouts
+
+DO NOT break current UI responsiveness.
+
+====================================================
+CODE QUALITY
+============
+
+Maintain:
+
+* reusable components
+* scalable architecture
+* modular structure
+* reusable hooks
+* reusable API services
+* clean TypeScript types
+
+====================================================
+IMPORTANT IMPLEMENTATION RULE
+=============================
+
+This update must feel like:
+
+* extending a real enterprise SaaS platform
+
+NOT:
+
+* rebuilding the application
+
+The existing UI and architecture should remain visually consistent while functionality becomes much deeper and more realistic.
+
+====================================================
+FINAL RESULT
+============
+
+The final system should feel like:
+
+“A realistic enterprise operating system where admins manage company operations and employees actively use the platform daily for attendance, projects, tasks, leaves, payroll, notifications, collaboration, and internal workflows.”
+
+The platform should now feel:
+
+* alive
+* interactive
+* workflow-driven
+* enterprise-grade
+* production-like
+  while preserving the existing design system and architecture.

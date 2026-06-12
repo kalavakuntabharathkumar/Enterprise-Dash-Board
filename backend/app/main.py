@@ -10,6 +10,7 @@ from app.api.routes import (
     analytics, ai, workflows, notifications, users
 )
 from app.api.routes import export
+from app.api.routes import payslips, profiles, announcements, timesheets, support, documents
 
 app = FastAPI(title="Enterprise OS API", version="1.0.0")
 
@@ -46,6 +47,12 @@ app.include_router(workflows.router, prefix=API_PREFIX)
 app.include_router(notifications.router, prefix=API_PREFIX)
 app.include_router(users.router, prefix=API_PREFIX)
 app.include_router(export.router, prefix=API_PREFIX)
+app.include_router(payslips.router, prefix=API_PREFIX)
+app.include_router(profiles.router, prefix=API_PREFIX)
+app.include_router(announcements.router, prefix=API_PREFIX)
+app.include_router(timesheets.router, prefix=API_PREFIX)
+app.include_router(support.router, prefix=API_PREFIX)
+app.include_router(documents.router, prefix=API_PREFIX)
 
 
 @app.get("/api/healthz")
@@ -56,7 +63,6 @@ def health_check():
 @app.on_event("startup")
 def startup():
     create_tables()
-    # Seed default data if empty
     from app.database import SessionLocal
     db = SessionLocal()
     try:
@@ -64,17 +70,18 @@ def startup():
         from app.core.security import get_password_hash
         from datetime import datetime
 
+        # ── Users ──────────────────────────────────────────────────────
         if db.query(models.User).count() == 0:
             admin = models.User(name="Alex Morgan", email="admin@enterpriseos.com", hashed_password=get_password_hash("admin123"), role="admin")
             db.add(admin)
             db.flush()
 
-        # Seed employee user if missing (idempotent)
         if not db.query(models.User).filter(models.User.email == "employee@enterpriseos.com").first():
             emp_user = models.User(name="Jordan Lee", email="employee@enterpriseos.com", hashed_password=get_password_hash("employee123"), role="employee")
             db.add(emp_user)
             db.flush()
 
+        # ── Departments ────────────────────────────────────────────────
         if db.query(models.Department).count() == 0:
             depts = [
                 models.Department(name="Engineering", head="Sarah Chen", description="Product development and infrastructure"),
@@ -87,8 +94,9 @@ def startup():
             db.add_all(depts)
             db.flush()
 
+        # ── Employees ──────────────────────────────────────────────────
         if db.query(models.Employee).count() == 0:
-            employees = [
+            employees_data = [
                 models.Employee(name="Sarah Chen", email="sarah.chen@co.com", department="Engineering", position="VP Engineering", status="active", salary=145000, joined_date="2021-03-15", location="San Francisco"),
                 models.Employee(name="Marcus Johnson", email="marcus.j@co.com", department="Sales", position="Sales Director", status="active", salary=125000, joined_date="2020-07-01", location="New York"),
                 models.Employee(name="Emma Davis", email="emma.d@co.com", department="Marketing", position="CMO", status="active", salary=130000, joined_date="2021-01-10", location="Austin"),
@@ -99,12 +107,19 @@ def startup():
                 models.Employee(name="David Kim", email="david.k@co.com", department="Engineering", position="Frontend Engineer", status="active", salary=105000, joined_date="2023-01-15", location="Remote"),
                 models.Employee(name="Ana Rodriguez", email="ana.r@co.com", department="Sales", position="Account Executive", status="active", salary=85000, joined_date="2022-08-01", location="Miami"),
                 models.Employee(name="Ben Thompson", email="ben.t@co.com", department="Marketing", position="Growth Manager", status="on_leave", salary=90000, joined_date="2022-11-01", location="Austin"),
+                models.Employee(name="Jordan Lee", email="employee@enterpriseos.com", department="Engineering", position="Software Engineer", status="active", salary=98000, joined_date="2023-06-01", location="Remote"),
             ]
-            db.add_all(employees)
+            db.add_all(employees_data)
             db.flush()
 
+        # ── Ensure Jordan Lee employee record exists ───────────────────
+        if not db.query(models.Employee).filter(models.Employee.email == "employee@enterpriseos.com").first():
+            db.add(models.Employee(name="Jordan Lee", email="employee@enterpriseos.com", department="Engineering", position="Software Engineer", status="active", salary=98000, joined_date="2023-06-01", location="Remote"))
+            db.flush()
+
+        # ── Leads ──────────────────────────────────────────────────────
         if db.query(models.Lead).count() == 0:
-            leads = [
+            leads_data = [
                 models.Lead(name="Michael Grant", company="TechCorp Inc", email="mgrant@techcorp.com", stage="proposal", value=85000, status="qualified", assigned_to="Marcus Johnson"),
                 models.Lead(name="Jennifer Walsh", company="DataFlow Systems", email="jwalsh@dataflow.com", stage="negotiation", value=142000, status="hot", assigned_to="Marcus Johnson"),
                 models.Lead(name="Robert Chen", company="Nexus Solutions", email="rchen@nexus.com", stage="prospecting", value=52000, status="new", assigned_to="Ana Rodriguez"),
@@ -112,31 +127,31 @@ def startup():
                 models.Lead(name="Kevin Santos", company="Blue Wave Media", email="ksantos@bluewave.com", stage="closed_won", value=95000, status="won", assigned_to="Ana Rodriguez"),
                 models.Lead(name="Lisa Monroe", company="Synergy Corp", email="lmonroe@synergy.com", stage="closed_lost", value=60000, status="lost", assigned_to="Ana Rodriguez"),
             ]
-            db.add_all(leads)
+            db.add_all(leads_data)
             db.flush()
 
         if db.query(models.Contact).count() == 0:
-            contacts = [
+            contacts_data = [
                 models.Contact(name="Michael Grant", email="mgrant@techcorp.com", company="TechCorp Inc", role="CTO", phone="+1-555-0101"),
                 models.Contact(name="Jennifer Walsh", email="jwalsh@dataflow.com", company="DataFlow Systems", role="CEO", phone="+1-555-0102"),
                 models.Contact(name="Diana Prince", email="dprince@apex.com", company="Apex Ventures", role="VP Product", phone="+1-555-0103"),
                 models.Contact(name="Kevin Santos", email="ksantos@bluewave.com", company="Blue Wave Media", role="Head of Marketing", phone="+1-555-0104"),
             ]
-            db.add_all(contacts)
+            db.add_all(contacts_data)
             db.flush()
 
         if db.query(models.Deal).count() == 0:
-            deals = [
+            deals_data = [
                 models.Deal(title="TechCorp Enterprise License", contact="Michael Grant", company="TechCorp Inc", value=85000, stage="proposal", probability=65, close_date="2024-02-28", assigned_to="Marcus Johnson"),
                 models.Deal(title="DataFlow Annual Contract", contact="Jennifer Walsh", company="DataFlow Systems", value=142000, stage="negotiation", probability=80, close_date="2024-01-31", assigned_to="Marcus Johnson"),
                 models.Deal(title="Apex Platform Deal", contact="Diana Prince", company="Apex Ventures", value=210000, stage="qualified", probability=40, close_date="2024-03-15", assigned_to="Marcus Johnson"),
                 models.Deal(title="Blue Wave Subscription", contact="Kevin Santos", company="Blue Wave Media", value=95000, stage="closed_won", probability=100, close_date="2024-01-15", assigned_to="Ana Rodriguez"),
             ]
-            db.add_all(deals)
+            db.add_all(deals_data)
             db.flush()
 
         if db.query(models.Product).count() == 0:
-            products = [
+            products_data = [
                 models.Product(name="Enterprise Server Pro", category="Hardware", sku="HW-001", stock=45, unit_price=4500, status="active", vendor="TechSupply Co"),
                 models.Product(name="Network Switch 48-Port", category="Hardware", sku="HW-002", stock=8, unit_price=1200, status="active", vendor="NetGear Pro"),
                 models.Product(name="SaaS Analytics Suite", category="Software", sku="SW-001", stock=500, unit_price=299, status="active"),
@@ -144,33 +159,32 @@ def startup():
                 models.Product(name="Office Desk Chair", category="Furniture", sku="FN-001", stock=0, unit_price=450, status="out_of_stock"),
                 models.Product(name="Standing Desk", category="Furniture", sku="FN-002", stock=12, unit_price=850, status="active"),
             ]
-            db.add_all(products)
+            db.add_all(products_data)
             db.flush()
 
         if db.query(models.Vendor).count() == 0:
-            vendors = [
+            vendors_data = [
                 models.Vendor(name="TechSupply Co", email="orders@techsupply.com", phone="+1-555-2001", status="active", category="Hardware"),
                 models.Vendor(name="NetGear Pro", email="sales@netgearpro.com", phone="+1-555-2002", status="active", category="Networking"),
                 models.Vendor(name="Office World", email="b2b@officeworld.com", phone="+1-555-2003", status="active", category="Office Supplies"),
                 models.Vendor(name="CloudBase Solutions", email="enterprise@cloudbase.io", phone="+1-555-2004", status="active", category="Cloud Services"),
             ]
-            db.add_all(vendors)
+            db.add_all(vendors_data)
             db.flush()
 
         if db.query(models.Invoice).count() == 0:
-            import random, string
-            invoices = [
+            invoices_data = [
                 models.Invoice(invoice_number="INV-001024", client="TechCorp Inc", amount=85000, status="paid", issue_date="2024-01-01", due_date="2024-01-31", description="Enterprise License Q1"),
                 models.Invoice(invoice_number="INV-001025", client="DataFlow Systems", amount=42000, status="sent", issue_date="2024-01-10", due_date="2024-02-10", description="Platform Subscription"),
                 models.Invoice(invoice_number="INV-001026", client="Apex Ventures", amount=28500, status="draft", issue_date="2024-01-15", due_date="2024-02-15", description="Consulting Services"),
                 models.Invoice(invoice_number="INV-001027", client="Blue Wave Media", amount=95000, status="paid", issue_date="2023-12-01", due_date="2023-12-31", description="Annual Contract"),
                 models.Invoice(invoice_number="INV-001028", client="Nexus Solutions", amount=15000, status="overdue", issue_date="2023-12-15", due_date="2024-01-05", description="Support Package"),
             ]
-            db.add_all(invoices)
+            db.add_all(invoices_data)
             db.flush()
 
         if db.query(models.Expense).count() == 0:
-            expenses = [
+            expenses_data = [
                 models.Expense(title="AWS Infrastructure", amount=12400, category="Technology", date="2024-01-01", status="approved", submitted_by="Sarah Chen"),
                 models.Expense(title="Office Rent - January", amount=18500, category="Office", date="2024-01-01", status="approved", submitted_by="Tom Baker"),
                 models.Expense(title="Team Offsite - SF", amount=8200, category="Travel", date="2024-01-08", status="approved", submitted_by="Emma Davis"),
@@ -178,21 +192,21 @@ def startup():
                 models.Expense(title="Legal Consulting", amount=5500, category="Professional Services", date="2024-01-12", status="pending", submitted_by="Priya Patel"),
                 models.Expense(title="Software Licenses", amount=7800, category="Technology", date="2024-01-15", status="approved", submitted_by="Sarah Chen"),
             ]
-            db.add_all(expenses)
+            db.add_all(expenses_data)
             db.flush()
 
         if db.query(models.Project).count() == 0:
-            projects = [
+            projects_data = [
                 models.Project(name="Platform Redesign 2024", description="Complete overhaul of the enterprise platform UI/UX", status="active", progress=45, start_date="2024-01-01", end_date="2024-04-30", manager="Sarah Chen", priority="high"),
                 models.Project(name="Mobile App Launch", description="Native iOS and Android enterprise app", status="active", progress=72, start_date="2023-11-01", end_date="2024-02-28", manager="David Kim", priority="high"),
                 models.Project(name="Data Analytics Pipeline", description="Real-time data processing and reporting infrastructure", status="active", progress=88, start_date="2023-10-15", end_date="2024-01-31", manager="Lisa Park", priority="medium"),
                 models.Project(name="Sales CRM Integration", description="Integrate third-party CRM with internal systems", status="planning", progress=15, start_date="2024-02-01", end_date="2024-05-31", manager="Marcus Johnson", priority="medium"),
             ]
-            db.add_all(projects)
+            db.add_all(projects_data)
             db.flush()
 
         if db.query(models.Task).count() == 0:
-            tasks = [
+            tasks_data = [
                 models.Task(title="Design system component library", status="done", priority="high", project_id=1, assignee="David Kim", due_date="2024-01-20"),
                 models.Task(title="Implement dashboard analytics module", status="in_progress", priority="high", project_id=1, assignee="Lisa Park", due_date="2024-02-05"),
                 models.Task(title="API performance optimization", status="in_progress", priority="medium", project_id=1, assignee="Sarah Chen", due_date="2024-02-10"),
@@ -201,23 +215,25 @@ def startup():
                 models.Task(title="Data pipeline unit tests", status="done", priority="low", project_id=3, assignee="Lisa Park", due_date="2024-01-25"),
                 models.Task(title="Set up ETL infrastructure", status="done", priority="high", project_id=3, assignee="Sarah Chen", due_date="2024-01-15"),
                 models.Task(title="CRM API contract review", status="todo", priority="medium", project_id=4, assignee="Marcus Johnson", due_date="2024-02-28"),
+                models.Task(title="Build REST API endpoints", status="in_progress", priority="high", project_id=1, assignee="Jordan Lee", due_date="2024-02-12"),
+                models.Task(title="Write integration tests", status="todo", priority="medium", project_id=1, assignee="Jordan Lee", due_date="2024-02-20"),
             ]
-            db.add_all(tasks)
+            db.add_all(tasks_data)
             db.flush()
 
         if db.query(models.Workflow).count() == 0:
-            workflows = [
+            workflows_data = [
                 models.Workflow(name="New Employee Onboarding", description="Automated workflow for new hire setup", trigger="employee_created", status="active", runs=48),
                 models.Workflow(name="Invoice Payment Reminder", description="Send reminders for overdue invoices", trigger="invoice_overdue", status="active", runs=124),
                 models.Workflow(name="Lead Qualification Scoring", description="Auto-score leads based on engagement", trigger="lead_created", status="active", runs=89),
                 models.Workflow(name="Weekly Performance Report", description="Generate and email weekly KPI reports", trigger="schedule_weekly", status="active", runs=36),
                 models.Workflow(name="Low Stock Alert", description="Alert procurement when stock falls below threshold", trigger="stock_low", status="inactive", runs=12),
             ]
-            db.add_all(workflows)
+            db.add_all(workflows_data)
             db.flush()
 
         if db.query(models.Notification).count() == 0:
-            notifications = [
+            notifications_data = [
                 models.Notification(title="New Lead Assigned", message="Michael Grant from TechCorp has been assigned to you", type="info", read=False, link="/crm/leads"),
                 models.Notification(title="Invoice Overdue", message="Invoice INV-001028 from Nexus Solutions is 10 days overdue", type="warning", read=False, link="/finance/invoices"),
                 models.Notification(title="Project Milestone Reached", message="Data Analytics Pipeline is 88% complete", type="success", read=True, link="/projects"),
@@ -225,7 +241,7 @@ def startup():
                 models.Notification(title="Low Stock Alert", message="Office Desk Chair is out of stock", type="warning", read=False, link="/erp"),
                 models.Notification(title="Deal Closed Won", message="Blue Wave Media deal worth $95K has been closed", type="success", read=True, link="/crm/deals"),
             ]
-            db.add_all(notifications)
+            db.add_all(notifications_data)
             db.flush()
 
         if db.query(models.AttendanceRecord).count() == 0:
@@ -239,26 +255,113 @@ def startup():
 
         if db.query(models.LeaveRequest).count() == 0:
             emps = db.query(models.Employee).all()
-            if emps:
+            if len(emps) >= 10:
                 db.add(models.LeaveRequest(employee_id=emps[9].id, type="Sick Leave", start_date="2024-01-22", end_date="2024-01-24", status="approved", reason="Medical appointment"))
                 db.add(models.LeaveRequest(employee_id=emps[1].id, type="Annual Leave", start_date="2024-02-05", end_date="2024-02-09", status="pending", reason="Family vacation"))
+            jordan = db.query(models.Employee).filter(models.Employee.email == "employee@enterpriseos.com").first()
+            if jordan:
+                db.add(models.LeaveRequest(employee_id=jordan.id, type="Sick Leave", start_date="2024-01-10", end_date="2024-01-11", status="approved", reason="Flu recovery"))
+                db.add(models.LeaveRequest(employee_id=jordan.id, type="Casual Leave", start_date="2024-02-14", end_date="2024-02-14", status="pending", reason="Personal errand"))
 
         if db.query(models.Purchase).count() == 0:
-            purchases = [
+            purchases_data = [
                 models.Purchase(vendor="TechSupply Co", product="Enterprise Server Pro", quantity=10, unit_price=4200, total=42000, date="2024-01-05", status="delivered"),
                 models.Purchase(vendor="NetGear Pro", product="Network Switch 48-Port", quantity=5, unit_price=1100, total=5500, date="2024-01-08", status="delivered"),
                 models.Purchase(vendor="Office World", product="Standing Desk", quantity=20, unit_price=800, total=16000, date="2024-01-12", status="pending"),
             ]
-            db.add_all(purchases)
+            db.add_all(purchases_data)
 
         if db.query(models.Milestone).count() == 0:
-            milestones = [
+            milestones_data = [
                 models.Milestone(title="Design System Complete", project_id=1, due_date="2024-01-31", status="completed"),
                 models.Milestone(title="Beta Launch", project_id=1, due_date="2024-03-15", status="pending"),
                 models.Milestone(title="iOS App Store Release", project_id=2, due_date="2024-02-28", status="pending"),
                 models.Milestone(title="Pipeline Go-Live", project_id=3, due_date="2024-01-31", status="completed"),
             ]
-            db.add_all(milestones)
+            db.add_all(milestones_data)
+
+        # ── NEW: Payslips ──────────────────────────────────────────────
+        if db.query(models.Payslip).count() == 0:
+            jordan = db.query(models.Employee).filter(models.Employee.email == "employee@enterpriseos.com").first()
+            sarah = db.query(models.Employee).filter(models.Employee.email == "sarah.chen@co.com").first()
+            months = ["2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06"]
+            for m in months:
+                if jordan:
+                    base = 8166.67
+                    bonus = 500 if m in ["2024-03", "2024-06"] else 0
+                    ded = base * 0.22
+                    db.add(models.Payslip(employee_id=jordan.id, month=m, salary=base, deductions=ded, bonus=bonus, final_amount=base + bonus - ded, status="paid"))
+                if sarah:
+                    base = 12083.33
+                    bonus = 1500 if m in ["2024-03", "2024-06"] else 0
+                    ded = base * 0.24
+                    db.add(models.Payslip(employee_id=sarah.id, month=m, salary=base, deductions=ded, bonus=bonus, final_amount=base + bonus - ded, status="paid"))
+
+        # ── NEW: Announcements ──────────────────────────────────────────
+        if db.query(models.Announcement).count() == 0:
+            anns = [
+                models.Announcement(title="Company Town Hall — June 20th", content="Join us for the quarterly all-hands meeting on June 20th at 3 PM EST. We'll cover Q2 results, product roadmap, and team recognitions. Zoom link will be shared 24hrs before.", type="meeting", pinned=True, created_by="Alex Morgan"),
+                models.Announcement(title="Office Closed — Independence Day", content="The office will be closed on July 4th in observance of Independence Day. Remote employees should update their status in the system.", type="holiday", pinned=True, created_by="HR Team"),
+                models.Announcement(title="New Health Insurance Benefits", content="We've upgraded our health insurance package effective July 1st. All employees will receive enhanced dental and vision coverage. Please review the updated benefits document in the Document Center.", type="hr_update", pinned=False, created_by="James Wilson"),
+                models.Announcement(title="Q2 Revenue Milestone Achieved!", content="We've hit $2.4M in Q2 revenue, surpassing our target by 18%! This is a testament to the incredible work of our sales and engineering teams. Bonuses will be processed this month.", type="company_news", pinned=False, created_by="Alex Morgan"),
+                models.Announcement(title="New Hire Orientation — June 17th", content="Please join us in welcoming 3 new team members joining the Engineering department on June 17th. The orientation will be held in Conference Room B from 9 AM.", type="hr_update", pinned=False, created_by="James Wilson"),
+                models.Announcement(title="System Maintenance — June 15th 2-4 AM", content="Scheduled maintenance for the enterprise platform will occur on June 15th between 2 AM and 4 AM EST. The system will be temporarily unavailable during this window.", type="general", pinned=False, created_by="Sarah Chen"),
+            ]
+            db.add_all(anns)
+
+        # ── NEW: Timesheets ─────────────────────────────────────────────
+        if db.query(models.Timesheet).count() == 0:
+            import datetime as dt
+            jordan = db.query(models.Employee).filter(models.Employee.email == "employee@enterpriseos.com").first()
+            today = dt.date.today()
+            if jordan:
+                for i in range(14):
+                    d = today - dt.timedelta(days=i)
+                    if d.weekday() < 5:
+                        db.add(models.Timesheet(employee_id=jordan.id, project_id=1, date=str(d), hours=8.0, description="Development work on Platform Redesign", billable=True, status="approved" if i > 2 else "pending"))
+
+        # ── NEW: Support Requests ───────────────────────────────────────
+        if db.query(models.SupportRequest).count() == 0:
+            jordan = db.query(models.Employee).filter(models.Employee.email == "employee@enterpriseos.com").first()
+            if jordan:
+                reqs = [
+                    models.SupportRequest(employee_id=jordan.id, request_type="IT", title="Laptop running slow", description="My development laptop has been very slow recently. RAM usage is consistently at 95%. Requesting either a RAM upgrade or hardware replacement.", status="in_progress", priority="high"),
+                    models.SupportRequest(employee_id=jordan.id, request_type="HR", title="Remote work equipment allowance", description="Requesting the standard $500 remote work equipment allowance as a new employee to purchase ergonomic accessories for my home office.", status="open", priority="medium"),
+                    models.SupportRequest(employee_id=jordan.id, request_type="Reimbursement", title="Conference ticket reimbursement", description="Attended NodeConf on June 8th for professional development. Attached receipt for $350 registration fee.", status="resolved", priority="low"),
+                ]
+                db.add_all(reqs)
+
+        # ── NEW: Documents ──────────────────────────────────────────────
+        if db.query(models.Document).count() == 0:
+            jordan = db.query(models.Employee).filter(models.Employee.email == "employee@enterpriseos.com").first()
+            docs = [
+                models.Document(title="Employee Handbook 2024", doc_type="policy", filename="employee_handbook_2024.pdf", size_kb=2048, uploaded_by="HR Team", is_company_doc=True),
+                models.Document(title="Code of Conduct", doc_type="policy", filename="code_of_conduct.pdf", size_kb=512, uploaded_by="HR Team", is_company_doc=True),
+                models.Document(title="Benefits Guide 2024", doc_type="policy", filename="benefits_guide_2024.pdf", size_kb=1024, uploaded_by="James Wilson", is_company_doc=True),
+                models.Document(title="Remote Work Policy", doc_type="policy", filename="remote_work_policy.pdf", size_kb=256, uploaded_by="HR Team", is_company_doc=True),
+                models.Document(title="IT Security Guidelines", doc_type="policy", filename="it_security_guidelines.pdf", size_kb=384, uploaded_by="Sarah Chen", is_company_doc=True),
+                models.Document(title="Expense Reimbursement Policy", doc_type="policy", filename="expense_policy.pdf", size_kb=196, uploaded_by="Priya Patel", is_company_doc=True),
+            ]
+            if jordan:
+                docs += [
+                    models.Document(title="Offer Letter — Jordan Lee", doc_type="offer_letter", filename="offer_letter_jordan.pdf", size_kb=128, uploaded_by="HR Team", employee_id=jordan.id, is_company_doc=False),
+                    models.Document(title="Employment Contract", doc_type="contract", filename="employment_contract_jordan.pdf", size_kb=320, uploaded_by="HR Team", employee_id=jordan.id, is_company_doc=False),
+                ]
+            db.add_all(docs)
+
+        # ── NEW: Employee Profiles ──────────────────────────────────────
+        if db.query(models.EmployeeProfile).count() == 0:
+            emp_user = db.query(models.User).filter(models.User.email == "employee@enterpriseos.com").first()
+            if emp_user:
+                db.add(models.EmployeeProfile(
+                    user_id=emp_user.id,
+                    phone="+1-555-9988",
+                    address="123 Oak Street, Remote City, CA 94102",
+                    emergency_contact="Riley Lee",
+                    emergency_phone="+1-555-9900",
+                    skills="Python,TypeScript,React,FastAPI,PostgreSQL,Docker",
+                    bio="Full-stack software engineer with 3 years of experience building enterprise applications. Passionate about clean code and developer experience.",
+                ))
 
         db.commit()
     except Exception as e:
