@@ -22,15 +22,14 @@ def get_department_analytics(user, db: Session) -> dict:
 
     # Pre-load data for efficiency
     all_emps = db.query(models.Employee).all()
-    emp_dept_map: dict[int, str] = {e.id: e.department for e in all_emps}  # employee_id → department
+    emp_dept_map: dict[int, str] = {e.id: e.department for e in all_emps}
 
-    # Leave requests in last 30 days (all, we filter per-dept below)
+    # Leave requests in last 30 days
     recent_leaves = db.query(models.LeaveRequest).filter(
         models.LeaveRequest.created_at >= cutoff
     ).all()
 
-    # Activity logs in last 30 days, joined to user → employee to get department
-    # Build user_id → employee_department map
+    # Build user_id → employee_department map via user.email → employee.email
     all_users = db.query(models.User).all()
     user_email_map: dict[int, str] = {u.id: u.email for u in all_users}
     emp_email_dept: dict[str, str] = {e.email: e.department for e in all_emps}
@@ -39,6 +38,7 @@ def get_department_analytics(user, db: Session) -> dict:
         for uid, email in user_email_map.items()
     }
 
+    # Activity logs in last 30 days — count per dept via actor_id → user.email → dept
     recent_activity = db.query(models.ActivityLog).filter(
         models.ActivityLog.timestamp >= cutoff
     ).all()
@@ -51,12 +51,12 @@ def get_department_analytics(user, db: Session) -> dict:
     # Aggregate per department
     # Leave: via employee_id → department
     leave_by_dept: dict[str, int] = {}
-    for l in recent_leaves:
-        dept = emp_dept_map.get(l.employee_id, "")
+    for lr in recent_leaves:
+        dept = emp_dept_map.get(lr.employee_id, "")
         if dept:
             leave_by_dept[dept] = leave_by_dept.get(dept, 0) + 1
 
-    # Activity: via actor_id → user.email → employee.department
+    # Activity: via actor_id → user.email → employee.department (join-based, not text match)
     activity_by_dept: dict[str, int] = {}
     for a in recent_activity:
         if a.actor_id:
@@ -64,7 +64,7 @@ def get_department_analytics(user, db: Session) -> dict:
             if dept:
                 activity_by_dept[dept] = activity_by_dept.get(dept, 0) + 1
 
-    # Docs: via document.department field
+    # Docs: via document.department field (for dept-scoped docs)
     docs_by_dept: dict[str, int] = {}
     for d in recent_docs:
         dept = d.department or ""
@@ -93,23 +93,7 @@ def get_department_analytics(user, db: Session) -> dict:
     }
 
 
-def get_department_export_rows(user, db: Session) -> list[dict]:
-    scope = get_effective_scope(user, db)
-    level = scope["level"]
-    scope_dept = scope.get("dept")
-
-    all_emps = db.query(models.Employee).all()
-    if level == "dept_head" and scope_dept:
-        all_emps = [e for e in all_emps if e.department == scope_dept]
-
-    return [
-        {
-            "name": e.name,
-            "email": e.email,
-            "department": e.department,
-            "position": e.position,
-            "status": e.status,
-            "joined_date": e.joined_date,
-        }
-        for e in all_emps
-    ]
+def get_department_activity_export_rows(user, db: Session) -> list[dict]:
+    """Export aggregated department metrics — NOT individual employee PII."""
+    data = get_department_analytics(user, db)
+    return data["departments"]

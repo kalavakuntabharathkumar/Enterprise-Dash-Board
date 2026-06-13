@@ -35,15 +35,13 @@ function SectionHeader({
   icon: Icon,
   title,
   subtitle,
-  exportUrl,
-  exportFilename,
+  exports,
   token,
 }: {
   icon: React.ElementType;
   title: string;
   subtitle: string;
-  exportUrl?: string;
-  exportFilename?: string;
+  exports?: { url: string; filename: string; label: string }[];
   token?: string | null;
 }) {
   return (
@@ -57,16 +55,21 @@ function SectionHeader({
           <p className="text-xs text-gray-500">{subtitle}</p>
         </div>
       </div>
-      {exportUrl && exportFilename && (
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-1.5 text-xs"
-          onClick={() => downloadCSV(exportUrl, exportFilename, token ?? null)}
-        >
-          <Download className="w-3.5 h-3.5" />
-          Export CSV
-        </Button>
+      {exports && exports.length > 0 && (
+        <div className="flex items-center gap-2">
+          {exports.map((exp) => (
+            <Button
+              key={exp.url}
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs"
+              onClick={() => downloadCSV(exp.url, exp.filename, token ?? null)}
+            >
+              <Download className="w-3.5 h-3.5" />
+              {exp.label}
+            </Button>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -122,25 +125,29 @@ function EmployeeSelfStats() {
 }
 
 export default function AnalyticsPage() {
+  // user.role is sourced from /api/auth/me on mount, which performs DB role_id lookup
+  // (see backend/app/core/scoping.py get_effective_scope — role_id path is authoritative).
   const { user, token } = useAuth();
   const role = user?.role ?? "employee";
 
+  // Section visibility matrix — matches spec exactly:
+  // Admin: Overview KPIs + HR + Finance + Department + Activity + Documents
+  // HR Manager: HR section + Documents  (no Overview, no Finance, no Activity section)
+  // Finance Manager: Finance section + Documents  (no Overview, no HR, no Activity)
+  // Dept Head: Department section + Documents  (no Overview, no HR, no Finance, no Activity)
+  // Employee: self-stats + Documents
   const isAdmin = role === "admin";
   const isHRManager = role === "hr_manager";
   const isFinanceManager = role === "finance_manager";
   const isDeptHead = role === "dept_head";
   const isEmployee = !isAdmin && !isHRManager && !isFinanceManager && !isDeptHead;
 
-  // HR section: HR Manager and Dept Head (manage_employees perm); Admin sees all
-  const showHR = isAdmin || isHRManager || isDeptHead;
-  // Finance section: Finance Manager; Admin sees all
-  const showFinance = isAdmin || isFinanceManager;
-  // Department section: HR Manager, Dept Head; Admin sees all
-  const showDepartment = isAdmin || isHRManager || isDeptHead;
-  // Activity section: everyone with view_analytics (not employee); Admin sees org-wide
-  const showActivity = isAdmin || isHRManager || isFinanceManager || isDeptHead;
-  // Overview KPIs: Admin only
-  const showOverview = isAdmin;
+  const showOverview   = isAdmin;
+  const showHR         = isAdmin || isHRManager;                            // NOT dept_head
+  const showFinance    = isAdmin || isFinanceManager;
+  const showDepartment = isAdmin || isDeptHead;                             // HR sees HR section, not dept section
+  const showActivity   = isAdmin;                                           // Activity Trends: admin only
+  // Documents visible to everyone (scoped server-side)
 
   const { data: overview, isLoading: isOverviewLoading } = useGetAnalyticsOverview();
   const { data: deptStats, isLoading: isDeptLoading } = useGetDepartmentStats();
@@ -227,16 +234,18 @@ export default function AnalyticsPage() {
         </section>
       )}
 
-      {/* ── HR Analytics (Admin + HR Manager + Dept Head) ──────────────── */}
+      {/* ── HR Analytics (Admin + HR Manager only) ─────────────────────── */}
       {showHR && (
         <section className="space-y-4">
           <SectionHeader
             icon={Users}
             title="HR Analytics"
             subtitle="Workforce metrics, leave trends, and approval performance"
-            exportUrl="/api/analytics/export/hr"
-            exportFilename="hr-leave-report.csv"
             token={token}
+            exports={[
+              { url: "/api/analytics/export/hr", filename: "hr-leave-report.csv", label: "HR Report" },
+              { url: "/api/analytics/export/leaves", filename: "leave-analytics.csv", label: "Leave Analytics" },
+            ]}
           />
           <HRAnalyticsWidget />
         </section>
@@ -254,38 +263,35 @@ export default function AnalyticsPage() {
         </section>
       )}
 
-      {/* ── Department Analytics (Admin + HR Manager + Dept Head) ──────── */}
+      {/* ── Department Analytics (Admin + Dept Head only) ───────────────── */}
       {showDepartment && (
         <section className="space-y-4">
           <SectionHeader
             icon={Building2}
             title="Department Analytics"
             subtitle="Team metrics for the last 30 days"
-            exportUrl="/api/analytics/export/department"
-            exportFilename="department-report.csv"
             token={token}
+            exports={[
+              { url: "/api/analytics/export/department", filename: "department-activity-report.csv", label: "Dept Report" },
+            ]}
           />
           <DepartmentAnalyticsWidget />
         </section>
       )}
 
-      {/* ── Activity Trends (all roles with view_analytics, not employee) ── */}
+      {/* ── Activity Trends (Admin only) ────────────────────────────────── */}
       {showActivity && (
         <section className="space-y-4">
           <SectionHeader
             icon={Activity}
             title="Activity Trends"
-            subtitle={
-              isAdmin || isHRManager
-                ? "Organization-wide activity over the last 30 days"
-                : "Activity in your scope over the last 30 days"
-            }
+            subtitle="Organization-wide activity over the last 30 days"
           />
           <ActivityTrendWidget />
         </section>
       )}
 
-      {/* ── Document Analytics (all authenticated users, scoped) ────────── */}
+      {/* ── Document Analytics (all authenticated users, scoped server-side) */}
       <section className="space-y-4">
         <SectionHeader
           icon={FileText}
@@ -295,7 +301,7 @@ export default function AnalyticsPage() {
         <DocumentStatsWidget />
       </section>
 
-      {/* ── Employee Self-Stats (employee role only — real data) ─────────── */}
+      {/* ── Employee Self-Stats (employee role only — real data from API) ── */}
       {isEmployee && (
         <section className="space-y-4">
           <SectionHeader

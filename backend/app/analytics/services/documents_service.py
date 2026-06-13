@@ -1,38 +1,63 @@
-"""Document analytics service — upload trends and distribution metrics."""
+"""Document analytics service — upload trends and distribution metrics.
+
+Visibility rules mirror those in api/routes/documents.py:
+  private       — uploader + admin only
+  department    — dept members + dept_heads + hr_manager + admin
+  organization  — all authenticated users
+  hr_only       — hr_manager + admin
+  finance_only  — finance_manager + admin
+"""
 from datetime import datetime, timedelta
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from app import models
 from app.core.scoping import get_effective_scope
 
 
 def _scope_doc_query(user, db: Session, q):
-    """Minimal document scoping for analytics."""
+    """
+    Scope document query to only documents the user is entitled to see,
+    following the same visibility rules as api/routes/documents.py.
+    """
     scope = get_effective_scope(user, db)
     level = scope["level"]
+    scope_dept = scope.get("dept")
 
     if level == "admin":
         return q
+
     if level == "hr_manager":
-        from sqlalchemy import or_
-        return q.filter(or_(
-            models.Document.visibility.in_(["organization", "hr_only"]),
-            models.Document.category == "HR",
-        ))
-    if level == "finance_manager":
-        from sqlalchemy import or_
-        return q.filter(or_(
-            models.Document.visibility.in_(["organization", "finance_only"]),
-            models.Document.category == "Finance",
-        ))
-    if level == "dept_head" and scope.get("dept"):
-        from sqlalchemy import or_
+        # org-wide + hr_only (+ their own uploads)
         return q.filter(or_(
             models.Document.visibility == "organization",
-            models.Document.department == scope["dept"],
+            models.Document.visibility == "hr_only",
             models.Document.uploaded_by_user_id == user.id,
         ))
-    # Employee: organization-wide + own uploads
-    from sqlalchemy import or_
+
+    if level == "finance_manager":
+        # org-wide + finance_only (+ their own uploads)
+        return q.filter(or_(
+            models.Document.visibility == "organization",
+            models.Document.visibility == "finance_only",
+            models.Document.uploaded_by_user_id == user.id,
+        ))
+
+    if level == "dept_head" and scope_dept:
+        # org-wide + ONLY department-scoped docs from THEIR department
+        # Must NOT include hr_only / finance_only / private docs,
+        # even if they happen to have a matching department field.
+        return q.filter(or_(
+            models.Document.visibility == "organization",
+            models.Document.is_company_doc.is_(False),  # own personal docs
+            # department-visibility docs explicitly scoped to their dept
+            (
+                (models.Document.visibility == "department") &
+                (models.Document.department == scope_dept)
+            ),
+            models.Document.uploaded_by_user_id == user.id,
+        ))
+
+    # Employee: org-wide + own uploads only
     return q.filter(or_(
         models.Document.visibility == "organization",
         models.Document.uploaded_by_user_id == user.id,
@@ -61,7 +86,7 @@ def get_document_analytics(user, db: Session) -> dict:
         label = d.strftime("%b %Y")
         uploads_by_month.append({"month": label, "count": month_counts.get(m, 0)})
 
-    # Category distribution
+    # Category distribution (only docs visible to this user)
     cat_counts: dict[str, int] = {}
     for d in all_docs:
         c = d.category or "General"
@@ -71,7 +96,7 @@ def get_document_analytics(user, db: Session) -> dict:
         key=lambda x: -x["count"],
     )
 
-    # Visibility breakdown
+    # Visibility breakdown (only docs visible to this user)
     vis_counts: dict[str, int] = {}
     for d in all_docs:
         v = d.visibility or "private"

@@ -158,15 +158,16 @@ def export_department_report(
     db: Session = Depends(get_db),
     current_user=Depends(require_permission("manage_employees")),
 ):
-    """Export department employee roster as CSV. Requires manage_employees permission.
-    Finance Manager is correctly excluded — they cannot export HR roster data.
+    """Export aggregated department activity metrics as CSV.
+    Requires manage_employees permission; Finance Manager is correctly excluded.
+    Exports department-level aggregated metrics (not individual employee PII).
     """
-    from app.analytics.services.department_service import get_department_export_rows
+    from app.analytics.services.department_service import get_department_activity_export_rows
     from app.analytics.utils.csv_export import dicts_to_csv
-    rows = get_department_export_rows(current_user, db)
-    csv_str = dicts_to_csv(rows, ["name", "email", "department", "position", "status", "joined_date"])
+    rows = get_department_activity_export_rows(current_user, db)
+    csv_str = dicts_to_csv(rows, ["department", "employee_count", "leave_requests_30d", "activity_count_30d", "doc_uploads_30d"])
     return StreamingResponse(
         io.StringIO(csv_str),
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=department-report.csv"},
+        headers={"Content-Disposition": "attachment; filename=department-activity-report.csv"},
     )
