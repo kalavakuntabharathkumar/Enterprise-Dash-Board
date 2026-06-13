@@ -1,0 +1,187 @@
+The Enterprise OS platform is now stable with:
+
+* RBAC
+* scoped access control
+* workflow approvals
+* notifications
+* activity feeds
+* role-personalized dashboards
+* document management system
+
+Now safely implement an Enterprise Analytics & Reporting Module WITHOUT rewriting the current architecture.
+
+IMPORTANT:
+Do NOT redesign the frontend.
+Do NOT rebuild dashboard architecture.
+Do NOT rewrite RBAC/scoping/workflows.
+Do NOT create a heavy BI system.
+Do NOT overengineer charts or realtime systems.
+
+Current system state:
+
+* Scoped APIs already exist
+* Personalized dashboards already exist
+* Workflows and activity logs already exist
+* Notifications exist
+* Document management exists
+* SQLite database is active
+* Replit environment must remain stable
+
+GOAL:
+Create lightweight enterprise operational analytics and reporting using the existing data architecture.
+
+REQUIRED TASKS
+
+1. Create centralized analytics backend module.
+
+Create:
+backend/app/analytics/
+
+* services/
+* schemas/
+* utils/
+
+Keep analytics modular and reusable.
+
+2. Build scoped analytics APIs.
+
+Create APIs such as:
+
+/api/analytics/hr
+/api/analytics/finance
+/api/analytics/department
+/api/analytics/activity
+/api/analytics/documents
+
+Analytics MUST respect:
+
+* RBAC
+* department scoping
+* visibility permissions
+
+3. Add operational KPI metrics.
+
+Examples:
+
+* pending approvals
+* leave trends
+* department employee count
+* document upload counts
+* activity frequency
+* average approval turnaround
+* active employees
+* unread notifications
+
+4. Add trend analytics.
+
+Examples:
+
+* monthly leave requests
+* department activity trends
+* finance activity summaries
+* document upload trends
+* workflow completion trends
+
+5. Reuse existing database models.
+
+Reuse:
+
+* LeaveRequest
+* ActivityLog
+* Notification
+* Document
+* Employee
+* WorkflowLog
+
+Do NOT duplicate business logic.
+
+6. Add lightweight reporting/export support.
+
+Create:
+
+* CSV export support
+* filtered analytics reports
+* scoped department exports
+
+Examples:
+
+* HR report export
+* Department activity export
+* Leave analytics export
+
+7. Integrate analytics into dashboards safely.
+
+Add modular analytics widgets:
+
+* HR analytics cards
+* Finance summary widgets
+* Department metrics
+* Activity trend charts
+
+Do NOT redesign dashboard layout.
+
+8. Keep charts lightweight and enterprise-oriented.
+
+GOOD:
+
+* approval trends
+* department metrics
+* workload summaries
+* operational KPIs
+
+BAD:
+
+* giant BI dashboards
+* realtime streaming systems
+* AI forecasting
+
+9. Maintain architecture cleanliness.
+
+Do NOT:
+
+* duplicate scoped filtering
+* hardcode role checks everywhere
+* create giant analytics files
+
+Reuse:
+
+* RBAC utilities
+* scoped access utilities
+* existing widget system
+
+10. Maintain SQLite compatibility.
+11. Maintain Replit compatibility.
+
+IMPORTANT IMPLEMENTATION RULES
+
+* Keep analytics modular
+* Keep widgets self-contained
+* Prefer reusable services
+* Preserve dashboard stability
+* Preserve current routing
+* Respect scoped access everywhere
+* Avoid unnecessary backend load
+
+BEFORE MODIFYING FILES:
+First analyze:
+
+* current dashboard widget architecture
+* safest analytics insertion points
+* existing reusable chart components
+* existing scoped API patterns
+* which analytics should be role-specific
+
+Then implement incrementally and safely.
+
+FINAL TESTING REQUIREMENTS
+
+Verify:
+
+* HR sees HR-only analytics
+* Finance sees finance summaries
+* Department Heads see department-scoped analytics
+* Employees do NOT see admin analytics
+* CSV exports respect scoped access
+* Existing dashboard structure remains stable
+* Notifications/workflows remain unaffected
+* No RBAC regressions occur
