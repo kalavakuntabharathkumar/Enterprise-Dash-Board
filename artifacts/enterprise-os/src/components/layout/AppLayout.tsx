@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/lib/theme";
 import { Bell, Search, ChevronRight, Sun, Moon, Settings, LogOut, User2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NotificationDropdown } from "@/components/notifications/NotificationDropdown";
 
 const pageTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
@@ -190,11 +191,7 @@ export function AppLayout() {
               {theme === "dark" ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-gray-500" />}
             </button>
 
-            <button onClick={() => navigate("/notifications")}
-              className="relative w-8 h-8 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
-              <Bell className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
-              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-indigo-500 rounded-full" />
-            </button>
+            <NotificationDropdown />
 
             <div className="relative" ref={userMenuRef}>
               <button

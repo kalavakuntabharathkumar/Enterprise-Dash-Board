@@ -1,0 +1,147 @@
+The Leave Approval Workflow system is now stable and operational.
+
+Now safely implement an enterprise-style Notification Center and Activity Feed system WITHOUT rewriting the existing architecture.
+
+IMPORTANT:
+Do NOT redesign the frontend.
+Do NOT rewrite RBAC.
+Do NOT replace existing workflows.
+Do NOT regenerate unrelated modules.
+Do NOT introduce complex realtime infrastructure.
+Do NOT overengineer.
+
+Current system state:
+
+* RBAC is stable
+* Workflow engine exists
+* Leave approvals work
+* Workflow logs exist
+* Notification table exists
+* Dynamic sidebar exists
+* Route protection exists
+
+GOAL:
+Create a clean enterprise notification and activity tracking system integrated with workflows.
+
+REQUIRED TASKS
+
+1. Build a centralized Notification Center.
+
+Create reusable notification architecture:
+
+backend/app/notifications/
+
+* routes
+* service
+* schemas
+
+Frontend:
+
+* notification dropdown/panel
+* unread badge counter
+* mark-as-read support
+
+2. Notifications should support:
+
+* user-targeted notifications
+* role-targeted notifications
+* global announcements
+
+Examples:
+
+* "Leave request approved"
+* "New leave request pending"
+* "System maintenance scheduled"
+
+3. Create Activity Feed system.
+
+Create:
+activity_logs table
+
+Fields:
+
+* id
+* actor_id
+* actor_role
+* action
+* entity_type
+* entity_id
+* description
+* timestamp
+
+4. Automatically create activity entries for:
+
+* leave submissions
+* approvals
+* rejections
+* login events
+* role changes
+* employee updates
+
+5. Add lightweight dashboard activity widgets.
+
+Employee dashboard:
+
+* personal notifications
+* recent activity
+
+Manager dashboards:
+
+* pending approvals
+* team activity
+
+6. Preserve current UI architecture.
+
+Do NOT:
+
+* redesign dashboard layout
+* regenerate pages
+* replace sidebar/navbar
+
+Only extend existing components safely.
+
+7. Keep implementation modular.
+
+Avoid:
+
+* giant notification files
+* duplicated logic
+* scattered event creation
+
+Centralize:
+
+* notification creation
+* activity creation
+
+8. Maintain SQLite compatibility.
+9. Maintain Replit compatibility.
+
+IMPORTANT IMPLEMENTATION RULES
+
+* Keep system lightweight
+* Polling is acceptable
+* Do NOT implement websockets yet
+* Reuse workflow logs where possible
+* Reuse RBAC middleware
+* Keep dashboard additions minimal and modular
+
+BEFORE MODIFYING FILES:
+First analyze:
+
+* existing navbar/header structure
+* safest notification insertion point
+* current dashboard architecture
+* how activity feed should integrate with workflows
+
+Then implement incrementally and safely.
+
+FINAL TESTING REQUIREMENTS
+
+Verify:
+
+* notifications appear correctly by role
+* unread counts update properly
+* activity feed logs workflow actions
+* employee sees only own notifications
+* managers see operational notifications
+* no existing dashboards break

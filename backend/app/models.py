@@ -229,6 +229,7 @@ class Notification(Base):
     __tablename__ = "notifications"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    target_role = Column(String, nullable=True)
     title = Column(String, nullable=False)
     message = Column(Text, nullable=False)
     type = Column(String, default="info")
@@ -340,4 +341,18 @@ class WorkflowLog(Base):
     performed_by_name = Column(String, nullable=True)
     role = Column(String, nullable=True)                # actor's role string
     comments = Column(Text, nullable=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+
+
+class ActivityLog(Base):
+    """System-wide activity feed — one row per significant user action."""
+    __tablename__ = "activity_logs"
+    id = Column(Integer, primary_key=True, index=True)
+    actor_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    actor_name = Column(String, nullable=True)
+    actor_role = Column(String, nullable=True)
+    action = Column(String, nullable=False)
+    entity_type = Column(String, nullable=True)
+    entity_id = Column(Integer, nullable=True)
+    description = Column(Text, nullable=False)
     timestamp = Column(DateTime, default=datetime.utcnow)

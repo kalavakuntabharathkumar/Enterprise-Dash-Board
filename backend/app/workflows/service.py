@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from app import models
 from app.notifications.service import NotificationService
+from app.notifications.activity_service import ActivityService
 from datetime import datetime
 
 
@@ -55,6 +56,7 @@ class LeaveWorkflowService:
     def __init__(self, db: Session):
         self.db = db
         self.notif = NotificationService(db)
+        self.activity = ActivityService(db)
 
     # ── Submit ─────────────────────────────────────────────────────────────────
 
@@ -72,9 +74,22 @@ class LeaveWorkflowService:
             comments=None,
         )
 
-        self.notif.create(
-            title="New Leave Request Submitted",
+        # Activity log
+        self.activity.log(
+            action="leave_submitted",
+            description=f"{actor.name} submitted a leave request",
+            actor_id=actor.id,
+            actor_name=actor.name,
+            actor_role=actor.role,
+            entity_type="leave_request",
+            entity_id=leave.id,
+        )
+
+        # Notify all admins
+        self.notif.create_for_role(
+            title="New Leave Request",
             message=f"{actor.name} submitted a leave request awaiting department review.",
+            role="admin",
             notif_type="info",
             link="/hrms/leaves",
         )
@@ -122,7 +137,26 @@ class LeaveWorkflowService:
         ).first()
         emp_name = emp.name if emp else "Employee"
 
-        self._notify_action(new_status, emp_name, actor, comments)
+        # Look up employee's user account for targeted notifications
+        emp_user = None
+        if emp:
+            emp_user = self.db.query(models.User).filter(
+                models.User.email == emp.email
+            ).first()
+
+        # Activity log
+        readable_action = log_action.replace("_", " ")
+        self.activity.log(
+            action=log_action,
+            description=f"{actor.name} {readable_action} for {emp_name}",
+            actor_id=actor.id,
+            actor_name=actor.name,
+            actor_role=actor.role,
+            entity_type="leave_request",
+            entity_id=leave_id,
+        )
+
+        self._notify_action(new_status, emp_name, actor, comments, emp_user_id=emp_user.id if emp_user else None)
         return leave
 
     # ── History ────────────────────────────────────────────────────────────────
@@ -163,26 +197,49 @@ class LeaveWorkflowService:
         emp_name: str,
         actor: models.User,
         comments: str | None,
+        emp_user_id: int | None = None,
     ) -> None:
         suffix = f" Comment: {comments}" if comments else ""
+
         if new_status == "pending_hr":
-            self.notif.create(
+            self.notif.create_for_role(
                 title="Leave Forwarded to HR",
-                message=f"{emp_name}'s leave request was approved by {actor.name} and forwarded to HR for final sign-off.{suffix}",
+                message=f"{emp_name}'s leave was approved by {actor.name} and forwarded to HR for final sign-off.{suffix}",
+                role="admin",
                 notif_type="info",
                 link="/hrms/leaves",
             )
+
         elif new_status == "approved":
-            self.notif.create(
+            self.notif.create_for_role(
                 title="Leave Request Approved",
                 message=f"{emp_name}'s leave request has been fully approved by {actor.name}.{suffix}",
+                role="admin",
                 notif_type="success",
                 link="/hrms/leaves",
             )
+            if emp_user_id:
+                self.notif.create(
+                    title="Your Leave Has Been Approved",
+                    message=f"Your leave request has been fully approved by {actor.name}.{suffix}",
+                    notif_type="success",
+                    user_id=emp_user_id,
+                    link="/my-leaves",
+                )
+
         elif new_status == "rejected":
-            self.notif.create(
+            self.notif.create_for_role(
                 title="Leave Request Rejected",
-                message=f"{emp_name}'s leave request was rejected by {actor.name}.{suffix}",
+                message=f"{emp_name}'s leave was rejected by {actor.name}.{suffix}",
+                role="admin",
                 notif_type="warning",
                 link="/hrms/leaves",
             )
+            if emp_user_id:
+                self.notif.create(
+                    title="Your Leave Request Was Rejected",
+                    message=f"Your leave request was rejected by {actor.name}.{suffix}",
+                    notif_type="warning",
+                    user_id=emp_user_id,
+                    link="/my-leaves",
+                )

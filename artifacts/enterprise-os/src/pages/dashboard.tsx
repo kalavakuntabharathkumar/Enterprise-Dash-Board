@@ -1,10 +1,13 @@
 import React from "react";
 import { useGetDashboardStats, useGetRevenueTrend, useListNotifications } from "@workspace/api-client-react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/lib/auth";
 import {
   Users, DollarSign, Target, Briefcase,
-  TrendingUp, TrendingDown, ArrowUpRight
+  TrendingUp, TrendingDown, ArrowUpRight, Activity, Clock
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -52,10 +55,39 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
+async function fetchWithAuth(url: string) {
+  const token = localStorage.getItem("enterprise_os_token");
+  const res = await fetch(url, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) return [];
+  return res.json();
+}
+
 export default function Dashboard() {
   const { data: stats, isLoading } = useGetDashboardStats();
   const { data: revenueTrend } = useGetRevenueTrend();
   const { data: notifications } = useListNotifications();
+  const navigate = useNavigate();
+  const { isAdmin } = useAuth();
+
+  const { data: activityLogs } = useQuery({
+    queryKey: ["activity-feed"],
+    queryFn: () => fetchWithAuth("/api/activity"),
+    refetchInterval: 30000,
+  });
+
+  const { data: pendingLeaveCount } = useQuery({
+    queryKey: ["pending-leave-count"],
+    queryFn: async () => {
+      const leaves = await fetchWithAuth("/api/leaves");
+      return (leaves as any[]).filter((l: any) =>
+        ["pending_department", "pending_hr", "pending"].includes(l.status)
+      ).length;
+    },
+    refetchInterval: 30000,
+    enabled: Boolean(isAdmin),
+  });
 
   const chartData = (revenueTrend && revenueTrend.length > 0) ? revenueTrend : FALLBACK_REVENUE;
 
@@ -95,6 +127,7 @@ export default function Dashboard() {
     },
   ];
 
+  const activityItems: any[] = (activityLogs as any[]) || [];
   const recentActivity = (notifications as any[])?.slice(0, 6) || [
     { title: "New Lead Assigned", message: "Michael Grant from TechCorp has been assigned", type: "info", read: false },
     { title: "Invoice Overdue", message: "Invoice INV-001028 is 10 days overdue", type: "warning", read: false },
@@ -102,6 +135,16 @@ export default function Dashboard() {
     { title: "Deal Closed", message: "Blue Wave Media deal worth $95K closed", type: "success", read: true },
     { title: "Low Stock Alert", message: "Office Desk Chair is out of stock", type: "warning", read: false },
   ];
+
+  const ACTION_ICON: Record<string, string> = {
+    login: "🔐",
+    leave_submitted: "📋",
+    approved_stage1: "✅",
+    approved_final: "✅",
+    rejected: "❌",
+    leave_approved: "✅",
+    leave_rejected: "❌",
+  };
 
   const typeColors: Record<string, string> = {
     info: "bg-blue-100 text-blue-700",
@@ -238,57 +281,111 @@ export default function Dashboard() {
 
       {/* Bottom row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Recent Activity */}
-        <Card className="lg:col-span-2 border-gray-100 shadow-sm bg-white">
+        {/* Recent Activity / Activity Feed */}
+        <Card className="lg:col-span-2 border-gray-100 shadow-sm bg-white dark:bg-[#0f1117] dark:border-white/5">
           <CardHeader className="pt-5 px-6 pb-4">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-semibold text-gray-900">Recent Activity</CardTitle>
-              <button className="text-xs text-indigo-600 font-medium hover:underline">View all</button>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-base font-semibold text-gray-900 dark:text-white">
+                  {activityItems.length > 0 ? "Activity Feed" : "Recent Activity"}
+                </CardTitle>
+                {activityItems.length > 0 && (
+                  <Activity className="w-4 h-4 text-indigo-400" />
+                )}
+              </div>
+              <button
+                onClick={() => navigate("/notifications")}
+                className="text-xs text-indigo-600 dark:text-indigo-400 font-medium hover:underline"
+              >
+                View all
+              </button>
             </div>
           </CardHeader>
           <CardContent className="px-6 pb-5">
-            <div className="space-y-3">
-              {recentActivity.slice(0, 5).map((item: any, i) => (
-                <div key={i} className="flex items-start gap-3 py-2.5 border-b border-gray-50 last:border-0">
-                  <div className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide flex-shrink-0 mt-0.5 ${typeColors[item.type] || typeColors.info}`}>
-                    {item.type}
+            {activityItems.length > 0 ? (
+              <div className="space-y-0">
+                {activityItems.slice(0, 6).map((item: any, i) => (
+                  <div key={item.id ?? i} className="flex items-start gap-3 py-2.5 border-b border-gray-50 dark:border-white/5 last:border-0">
+                    <div className="w-7 h-7 rounded-full bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center flex-shrink-0 text-sm">
+                      {ACTION_ICON[item.action] ?? "•"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-800 dark:text-white truncate">{item.description}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {item.actor_role && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 capitalize">{item.actor_role}</span>
+                        )}
+                        <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                          <Clock className="w-2.5 h-2.5" />
+                          {item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800 truncate">{item.title}</p>
-                    <p className="text-xs text-gray-500 truncate">{item.message}</p>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {recentActivity.slice(0, 5).map((item: any, i) => (
+                  <div key={i} className="flex items-start gap-3 py-2.5 border-b border-gray-50 dark:border-white/5 last:border-0">
+                    <div className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide flex-shrink-0 mt-0.5 ${typeColors[item.type] || typeColors.info}`}>
+                      {item.type}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-800 dark:text-white truncate">{item.title}</p>
+                      <p className="text-xs text-gray-500 truncate">{item.message}</p>
+                    </div>
+                    {!item.read && (
+                      <div className="w-2 h-2 bg-indigo-500 rounded-full flex-shrink-0 mt-1.5" />
+                    )}
                   </div>
-                  {!item.read && (
-                    <div className="w-2 h-2 bg-indigo-500 rounded-full flex-shrink-0 mt-1.5" />
-                  )}
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Quick actions + module summary */}
-        <Card className="border-gray-100 shadow-sm bg-white">
+        {/* Quick actions */}
+        <Card className="border-gray-100 shadow-sm bg-white dark:bg-[#0f1117] dark:border-white/5">
           <CardHeader className="pt-5 px-6 pb-4">
-            <CardTitle className="text-base font-semibold text-gray-900">Quick Actions</CardTitle>
+            <CardTitle className="text-base font-semibold text-gray-900 dark:text-white">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="px-6 pb-5">
             <div className="space-y-2">
-              {[
-                { label: "Add Employee", href: "/hrms", color: "bg-indigo-50 text-indigo-700 hover:bg-indigo-100" },
-                { label: "Create Invoice", href: "/finance/invoices", color: "bg-emerald-50 text-emerald-700 hover:bg-emerald-100" },
-                { label: "New Lead", href: "/crm/leads", color: "bg-amber-50 text-amber-700 hover:bg-amber-100" },
-                { label: "Start Project", href: "/projects", color: "bg-purple-50 text-purple-700 hover:bg-purple-100" },
-                { label: "View Analytics", href: "/analytics", color: "bg-blue-50 text-blue-700 hover:bg-blue-100" },
-              ].map((action) => (
-                <a
-                  key={action.label}
-                  href={action.href}
-                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${action.color}`}
+              {isAdmin && (
+                <button
+                  onClick={() => navigate("/hrms/leaves")}
+                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-500/20"
                 >
-                  {action.label}
+                  <span className="flex items-center gap-2">
+                    Review Leave Requests
+                    {(pendingLeaveCount ?? 0) > 0 && (
+                      <span className="px-1.5 py-0.5 bg-indigo-500 text-white text-[10px] font-bold rounded-full leading-none">
+                        {pendingLeaveCount}
+                      </span>
+                    )}
+                  </span>
                   <ArrowUpRight className="w-3.5 h-3.5 opacity-60" />
-                </a>
-              ))}
+                </button>
+              )}
+              {[
+                { label: "Add Employee", href: "/hrms", color: "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-500/20", adminOnly: true },
+                { label: "Create Invoice", href: "/finance/invoices", color: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-500/20", adminOnly: true },
+                { label: "New Lead", href: "/crm/leads", color: "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-500/20", adminOnly: true },
+                { label: "Start Project", href: "/projects", color: "bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-500/20", adminOnly: false },
+                { label: "View Analytics", href: "/analytics", color: "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-500/20", adminOnly: false },
+              ]
+                .filter((a) => !a.adminOnly || isAdmin)
+                .map((action) => (
+                  <a
+                    key={action.label}
+                    href={action.href}
+                    className={`flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${action.color}`}
+                  >
+                    {action.label}
+                    <ArrowUpRight className="w-3.5 h-3.5 opacity-60" />
+                  </a>
+                ))}
             </div>
           </CardContent>
         </Card>

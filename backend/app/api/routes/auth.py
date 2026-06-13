@@ -31,6 +31,17 @@ def login(body: LoginInput, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == body.email).first()
     if not user or not verify_password(body.password, user.hashed_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
+    from app.notifications.activity_service import ActivityService
+    ActivityService(db).log(
+        action="login",
+        description=f"{user.name} signed in",
+        actor_id=user.id,
+        actor_name=user.name,
+        actor_role=user.role,
+    )
+    db.commit()
+
     token = create_access_token({"sub": str(user.id)}, timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     return {"access_token": token, "token_type": "bearer", "user": user_to_dict(user)}
 

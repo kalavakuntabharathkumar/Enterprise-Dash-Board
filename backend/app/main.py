@@ -12,6 +12,7 @@ from app.api.routes import (
 from app.api.routes import export
 from app.api.routes import payslips, profiles, announcements, timesheets, support, documents
 from app.api.routes import rbac
+from app.api.routes import activity
 
 app = FastAPI(title="Enterprise OS API", version="1.0.0")
 
@@ -55,6 +56,7 @@ app.include_router(timesheets.router, prefix=API_PREFIX)
 app.include_router(support.router, prefix=API_PREFIX)
 app.include_router(documents.router, prefix=API_PREFIX)
 app.include_router(rbac.router, prefix=API_PREFIX)
+app.include_router(activity.router, prefix=API_PREFIX)
 
 
 @app.get("/api/healthz")
@@ -78,6 +80,7 @@ def startup():
         ("leave_requests", "created_at",             "ALTER TABLE leave_requests ADD COLUMN created_at TEXT"),
         ("leave_requests", "updated_at",             "ALTER TABLE leave_requests ADD COLUMN updated_at TEXT"),
         ("notifications",  "user_id",                "ALTER TABLE notifications ADD COLUMN user_id INTEGER"),
+        ("notifications",  "target_role",            "ALTER TABLE notifications ADD COLUMN target_role TEXT"),
     ]
 
     with engine.connect() as _conn:
