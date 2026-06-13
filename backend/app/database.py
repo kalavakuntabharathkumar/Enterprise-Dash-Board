@@ -19,4 +19,4 @@ def get_db():
 
 def create_tables():
     from app import models  # noqa
-    Base.metadata.create_all(bind=engine)
+    Base.metadata.create_all(bind=engine, checkfirst=True)

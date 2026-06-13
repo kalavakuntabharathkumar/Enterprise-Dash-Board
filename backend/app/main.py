@@ -66,26 +66,34 @@ def health_check():
 def startup():
     create_tables()
 
-    # ── Safe column migration (raw SQL, before any ORM query touches users) ──
+    # ── Safe column migrations — each ALTER TABLE is guarded by PRAGMA ──────
     from sqlalchemy import text
     from app.database import engine
+
+    # Maps: (table_name, column_name) → full ALTER TABLE SQL
+    _col_migrations = [
+        ("users",          "role_id",               "ALTER TABLE users ADD COLUMN role_id INTEGER REFERENCES roles(id)"),
+        ("users",          "department_id",          "ALTER TABLE users ADD COLUMN department_id INTEGER REFERENCES departments(id)"),
+        ("leave_requests", "current_approver_role",  "ALTER TABLE leave_requests ADD COLUMN current_approver_role TEXT"),
+        ("leave_requests", "created_at",             "ALTER TABLE leave_requests ADD COLUMN created_at TEXT"),
+        ("leave_requests", "updated_at",             "ALTER TABLE leave_requests ADD COLUMN updated_at TEXT"),
+        ("notifications",  "user_id",                "ALTER TABLE notifications ADD COLUMN user_id INTEGER"),
+    ]
+
     with engine.connect() as _conn:
-        try:
-            result = _conn.execute(text("PRAGMA table_info(users)"))
-            existing_cols = {row[1] for row in result.fetchall()}
-            altered = False
-            for col_sql in [
-                "ALTER TABLE users ADD COLUMN role_id INTEGER REFERENCES roles(id)",
-                "ALTER TABLE users ADD COLUMN department_id INTEGER REFERENCES departments(id)",
-            ]:
-                col_name = col_sql.split("ADD COLUMN ")[1].split(" ")[0]
-                if col_name not in existing_cols:
-                    _conn.execute(text(col_sql))
-                    altered = True
-            if altered:
-                _conn.commit()
-        except Exception as _e:
-            print(f"Column migration error (non-fatal): {_e}")
+        # Cache existing columns per table to avoid redundant PRAGMAs
+        _table_cols: dict = {}
+        for tbl, col, sql in _col_migrations:
+            if tbl not in _table_cols:
+                r = _conn.execute(text(f"PRAGMA table_info({tbl})"))
+                _table_cols[tbl] = {row[1] for row in r.fetchall()}
+            if col not in _table_cols[tbl]:
+                try:
+                    _conn.execute(text(sql))
+                    _conn.commit()
+                    _table_cols[tbl].add(col)
+                except Exception as _e:
+                    print(f"Migration skipped ({tbl}.{col}): {_e}")
 
     from app.database import SessionLocal
     db = SessionLocal()

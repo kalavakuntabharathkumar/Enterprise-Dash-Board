@@ -82,8 +82,11 @@ class LeaveRequest(Base):
     type = Column(String, nullable=False)
     start_date = Column(String, nullable=False)
     end_date = Column(String, nullable=False)
-    status = Column(String, default="pending")
+    status = Column(String, default="pending_department")
     reason = Column(Text, nullable=False)
+    current_approver_role = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)
 
 
 class Lead(Base):
@@ -225,6 +228,7 @@ class Milestone(Base):
 class Notification(Base):
     __tablename__ = "notifications"
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     title = Column(String, nullable=False)
     message = Column(Text, nullable=False)
     type = Column(String, default="info")
@@ -321,3 +325,19 @@ class Document(Base):
     employee_id = Column(Integer, ForeignKey("employees.id"), nullable=True)
     is_company_doc = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+# ── Workflow Engine ────────────────────────────────────────────────────────────
+
+class WorkflowLog(Base):
+    """Immutable audit trail for every workflow state transition."""
+    __tablename__ = "workflow_logs"
+    id = Column(Integer, primary_key=True, index=True)
+    entity_type = Column(String, nullable=False)        # e.g. "leave_request"
+    entity_id = Column(Integer, nullable=False)
+    action = Column(String, nullable=False)             # "submitted" | "approved_stage1" | "approved_final" | "rejected"
+    performed_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    performed_by_name = Column(String, nullable=True)
+    role = Column(String, nullable=True)                # actor's role string
+    comments = Column(Text, nullable=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)

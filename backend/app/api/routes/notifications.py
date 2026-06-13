@@ -7,7 +7,16 @@ router = APIRouter(prefix="/notifications", tags=["notifications"])
 
 
 def notif_to_dict(n):
-    return {"id": n.id, "title": n.title, "message": n.message, "type": n.type, "read": n.read, "created_at": str(n.created_at), "link": n.link}
+    return {
+        "id": n.id,
+        "title": n.title,
+        "message": n.message,
+        "type": n.type,
+        "read": n.read,
+        "created_at": str(n.created_at),
+        "link": n.link,
+        "user_id": getattr(n, "user_id", None),
+    }
 
 
 @router.get("")
