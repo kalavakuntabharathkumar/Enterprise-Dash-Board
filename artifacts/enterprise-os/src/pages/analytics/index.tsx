@@ -214,16 +214,17 @@ export default function AnalyticsPage() {
                   </CardContent>
                 </Card>
                 <Card className="min-h-[360px]">
-                  <CardHeader><CardTitle>Department Headcount</CardTitle></CardHeader>
+                  <CardHeader><CardTitle>Department Performance</CardTitle></CardHeader>
                   <CardContent className="h-72">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={deptStats}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                         <XAxis dataKey="department" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#6b7280" }} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#6b7280" }} />
-                        <Tooltip />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#6b7280" }} domain={[0, 100]} unit="%" />
+                        <Tooltip formatter={(v: number) => `${v}%`} />
                         <Legend />
-                        <Bar dataKey="employees" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="performance" name="Performance" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="budget_used" name="Budget Used" fill="#6366f1" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </CardContent>

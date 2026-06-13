@@ -60,10 +60,10 @@ def get_revenue_trend(db: Session = Depends(get_db), _=Depends(get_current_user)
 @router.get("/hr")
 def get_hr_analytics(
     db: Session = Depends(get_db),
-    current_user=Depends(require_permission("manage_employees")),
+    current_user=Depends(require_permission("view_hr_analytics")),
 ):
-    """HR analytics — requires manage_employees permission (HR Manager, Dept Head, Admin).
-    Finance Manager is correctly excluded by the permission mapping.
+    """HR analytics — requires view_hr_analytics permission (Admin + HR Manager only).
+    Dept Head and Finance Manager are correctly excluded by the permission mapping.
     Data is further scoped inside the service via scope_leave_query / scope_employee_query.
     """
     from app.analytics.services.hr_service import get_hr_analytics
@@ -73,9 +73,9 @@ def get_hr_analytics(
 @router.get("/finance")
 def get_finance_analytics(
     db: Session = Depends(get_db),
-    _=Depends(require_permission("view_finance")),
+    _=Depends(require_permission("view_finance_analytics")),
 ):
-    """Finance analytics — requires view_finance permission (Finance Manager + Admin only).
+    """Finance analytics — requires view_finance_analytics permission (Admin + Finance Manager only).
     HR Manager and Dept Head are correctly excluded by the permission mapping.
     """
     from app.analytics.services.finance_service import get_finance_analytics
@@ -122,9 +122,9 @@ def get_document_analytics(
 @router.get("/export/hr")
 def export_hr_report(
     db: Session = Depends(get_db),
-    current_user=Depends(require_permission("manage_employees")),
+    current_user=Depends(require_permission("view_hr_analytics")),
 ):
-    """Export scoped HR leave report as CSV. Requires manage_employees permission."""
+    """Export scoped HR leave report as CSV. Requires view_hr_analytics permission (Admin + HR Manager)."""
     from app.analytics.services.hr_service import get_hr_export_rows
     from app.analytics.utils.csv_export import dicts_to_csv
     rows = get_hr_export_rows(current_user, db)

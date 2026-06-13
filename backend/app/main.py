@@ -519,6 +519,36 @@ def startup():
                 if existing:
                     existing.hashed_password = get_password_hash(password)
 
+        # ── Safe upsert: analytics-specific permissions ──────────────────
+        # These are inserted regardless of whether PERM_DEFS were seeded earlier,
+        # so they survive restarts against a pre-existing DB.
+        ANALYTICS_PERMS = [
+            ("view_hr_analytics",      "Access HR analytics dashboards and workforce reports", "analytics"),
+            ("view_finance_analytics", "Access finance analytics and financial reports",        "analytics"),
+        ]
+        existing_perm_names = {p.name for p in db.query(models.Permission).all()}
+        for name, desc, module in ANALYTICS_PERMS:
+            if name not in existing_perm_names:
+                db.add(models.Permission(name=name, description=desc, module=module))
+        db.flush()
+
+        ANALYTICS_PERM_ROLE_MAP = {
+            "view_hr_analytics":      ["Super Admin", "Admin", "HR Manager"],
+            "view_finance_analytics": ["Super Admin", "Admin", "Finance Manager"],
+        }
+        roles_map2 = {r.name: r.id for r in db.query(models.Role).all()}
+        perms_map2 = {p.name: p.id for p in db.query(models.Permission).all()}
+        existing_rp = {(rp.role_id, rp.permission_id) for rp in db.query(models.RolePermission).all()}
+        for perm_name, role_names in ANALYTICS_PERM_ROLE_MAP.items():
+            perm_id = perms_map2.get(perm_name)
+            if not perm_id:
+                continue
+            for role_name in role_names:
+                role_id = roles_map2.get(role_name)
+                if role_id and (role_id, perm_id) not in existing_rp:
+                    db.add(models.RolePermission(role_id=role_id, permission_id=perm_id))
+        db.flush()
+
         db.commit()
     except Exception as e:
         db.rollback()

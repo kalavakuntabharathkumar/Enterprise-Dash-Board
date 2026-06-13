@@ -99,8 +99,8 @@ export default function App() {
                     <Route path=":id" element={<ProjectDetailPage />} />
                   </Route>
 
-                  {/* Analytics — requires view_analytics permission */}
-                  <Route path="analytics" element={<PermissionGuard permission="view_analytics"><AnalyticsPage /></PermissionGuard>} />
+                  {/* Analytics — accessible to all authenticated users; page renders role-scoped sections */}
+                  <Route path="analytics" element={<AnalyticsPage />} />
 
                   {/* Workflows — admin only */}
                   <Route path="workflows" element={<AdminGuard><WorkflowsPage /></AdminGuard>} />
