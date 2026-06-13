@@ -457,9 +457,9 @@ def startup():
         db.flush()  # ensure prior inserts are visible to subsequent queries
         TEST_USERS = [
             # (name, email, password, role_str, role_name_in_db, dept_name)
-            ("Sarah HR", "hr@enterpriseos.com", "hr123", "hr_manager", "HR Manager", "HR"),
+            ("Sarah HR", "hr@enterpriseos.com", "hr1234", "hr_manager", "HR Manager", "HR"),
             ("Frank Finance", "finance@enterpriseos.com", "finance123", "finance_manager", "Finance Manager", "Finance"),
-            ("Max Projects", "pm@enterpriseos.com", "pm123", "project_manager", "Project Manager", "Engineering"),
+            ("Max Projects", "pm@enterpriseos.com", "pm1234", "project_manager", "Project Manager", "Engineering"),
             ("Super Admin", "superadmin@enterpriseos.com", "super123", "super_admin", "Super Admin", None),
         ]
         from sqlalchemy import text as _text
@@ -475,6 +475,11 @@ def startup():
                     department_id=depts_map.get(dept_name) if dept_name else None,
                 )
                 db.add(u)
+            else:
+                # Ensure password is up-to-date on restarts (fixes previously seeded short passwords)
+                existing = db.query(models.User).filter(models.User.email == email).first()
+                if existing:
+                    existing.hashed_password = get_password_hash(password)
 
         db.commit()
     except Exception as e:
