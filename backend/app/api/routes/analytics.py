@@ -1,5 +1,5 @@
 import io
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -7,7 +7,6 @@ from app.database import get_db
 from app import models
 from app.core.security import get_current_user
 from app.core.rbac import require_permission
-from app.core.scoping import get_effective_scope
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
@@ -17,7 +16,7 @@ router = APIRouter(prefix="/analytics", tags=["analytics"])
 @router.get("/overview")
 def get_analytics_overview(
     db: Session = Depends(get_db),
-    _=Depends(require_permission("view_analytics")),
+    current_user=Depends(require_permission("view_analytics")),
 ):
     total_employees = db.query(models.Employee).count()
     total_revenue = db.query(func.sum(models.Invoice.amount)).filter(models.Invoice.status == "paid").scalar() or 0
@@ -61,12 +60,12 @@ def get_revenue_trend(db: Session = Depends(get_db), _=Depends(get_current_user)
 @router.get("/hr")
 def get_hr_analytics(
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_permission("manage_employees")),
 ):
-    """HR analytics — scoped by role. Admin + hr_manager see full org data."""
-    scope = get_effective_scope(current_user, db)
-    if scope["level"] not in ("admin", "hr_manager", "dept_head"):
-        raise HTTPException(status_code=403, detail="HR analytics requires HR Manager or higher access.")
+    """HR analytics — requires manage_employees permission (HR Manager, Dept Head, Admin).
+    Finance Manager is correctly excluded by the permission mapping.
+    Data is further scoped inside the service via scope_leave_query / scope_employee_query.
+    """
     from app.analytics.services.hr_service import get_hr_analytics
     return get_hr_analytics(current_user, db)
 
@@ -74,12 +73,11 @@ def get_hr_analytics(
 @router.get("/finance")
 def get_finance_analytics(
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    _=Depends(require_permission("view_finance")),
 ):
-    """Finance analytics — admin and finance_manager only."""
-    scope = get_effective_scope(current_user, db)
-    if scope["level"] not in ("admin", "finance_manager"):
-        raise HTTPException(status_code=403, detail="Finance analytics requires Finance Manager or Admin access.")
+    """Finance analytics — requires view_finance permission (Finance Manager + Admin only).
+    HR Manager and Dept Head are correctly excluded by the permission mapping.
+    """
     from app.analytics.services.finance_service import get_finance_analytics
     return get_finance_analytics(db)
 
@@ -87,12 +85,12 @@ def get_finance_analytics(
 @router.get("/department")
 def get_department_analytics(
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_permission("manage_employees")),
 ):
-    """Department metrics — scoped. Admin/HR see all depts; dept_head sees own dept."""
-    scope = get_effective_scope(current_user, db)
-    if scope["level"] == "employee":
-        raise HTTPException(status_code=403, detail="Department analytics requires Department Head or higher access.")
+    """Department metrics — requires manage_employees permission (HR Manager, Dept Head, Admin).
+    Finance Manager is correctly excluded — they cannot access department HR rosters.
+    Data is further scoped by scope level inside the service.
+    """
     from app.analytics.services.department_service import get_department_analytics
     return get_department_analytics(current_user, db)
 
@@ -100,9 +98,11 @@ def get_department_analytics(
 @router.get("/activity")
 def get_activity_analytics(
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_permission("view_analytics")),
 ):
-    """Activity feed analytics — admin/hr_manager see org-wide; others see own activity."""
+    """Activity feed analytics — requires view_analytics permission (all roles except Employee).
+    Admin/hr_manager see org-wide; others see only their own activity.
+    """
     from app.analytics.services.activity_service import get_activity_analytics
     return get_activity_analytics(current_user, db)
 
@@ -112,7 +112,7 @@ def get_document_analytics(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    """Document upload analytics — scoped by visibility rules."""
+    """Document upload analytics — accessible to all authenticated users, scoped by visibility rules."""
     from app.analytics.services.documents_service import get_document_analytics
     return get_document_analytics(current_user, db)
 
@@ -122,12 +122,9 @@ def get_document_analytics(
 @router.get("/export/hr")
 def export_hr_report(
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_permission("manage_employees")),
 ):
-    """Export scoped HR leave report as CSV."""
-    scope = get_effective_scope(current_user, db)
-    if scope["level"] not in ("admin", "hr_manager", "dept_head"):
-        raise HTTPException(status_code=403, detail="HR export requires HR Manager or higher access.")
+    """Export scoped HR leave report as CSV. Requires manage_employees permission."""
     from app.analytics.services.hr_service import get_hr_export_rows
     from app.analytics.utils.csv_export import dicts_to_csv
     rows = get_hr_export_rows(current_user, db)
@@ -142,12 +139,9 @@ def export_hr_report(
 @router.get("/export/leaves")
 def export_leave_analytics(
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_permission("approve_leave")),
 ):
-    """Export leave analytics CSV (alias of hr export with same scoping)."""
-    scope = get_effective_scope(current_user, db)
-    if scope["level"] not in ("admin", "hr_manager", "dept_head"):
-        raise HTTPException(status_code=403, detail="Leave export requires HR Manager or higher access.")
+    """Export leave analytics CSV. Requires approve_leave permission (HR Manager, Dept Head, Admin)."""
     from app.analytics.services.hr_service import get_hr_export_rows
     from app.analytics.utils.csv_export import dicts_to_csv
     rows = get_hr_export_rows(current_user, db)
@@ -162,12 +156,11 @@ def export_leave_analytics(
 @router.get("/export/department")
 def export_department_report(
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_permission("manage_employees")),
 ):
-    """Export department employee roster as CSV (scoped)."""
-    scope = get_effective_scope(current_user, db)
-    if scope["level"] == "employee":
-        raise HTTPException(status_code=403, detail="Department export requires Department Head or higher access.")
+    """Export department employee roster as CSV. Requires manage_employees permission.
+    Finance Manager is correctly excluded — they cannot export HR roster data.
+    """
     from app.analytics.services.department_service import get_department_export_rows
     from app.analytics.utils.csv_export import dicts_to_csv
     rows = get_department_export_rows(current_user, db)

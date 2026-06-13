@@ -16,62 +16,76 @@ def get_department_analytics(user, db: Session) -> dict:
     all_depts = db.query(models.Department).all()
     if level == "dept_head" and scope_dept:
         target_depts = [d for d in all_depts if d.name == scope_dept]
-    elif level == "employee":
-        # Employees see only their own department metrics
-        target_depts = [d for d in all_depts if d.name == scope_dept] if scope_dept else []
     else:
+        # admin / hr_manager see all departments
         target_depts = all_depts
 
-    # Pre-load all data for efficiency
+    # Pre-load data for efficiency
     all_emps = db.query(models.Employee).all()
-    all_leaves = db.query(models.LeaveRequest).filter(
+    emp_dept_map: dict[int, str] = {e.id: e.department for e in all_emps}  # employee_id → department
+
+    # Leave requests in last 30 days (all, we filter per-dept below)
+    recent_leaves = db.query(models.LeaveRequest).filter(
         models.LeaveRequest.created_at >= cutoff
     ).all()
-    all_activity = db.query(models.ActivityLog).filter(
+
+    # Activity logs in last 30 days, joined to user → employee to get department
+    # Build user_id → employee_department map
+    all_users = db.query(models.User).all()
+    user_email_map: dict[int, str] = {u.id: u.email for u in all_users}
+    emp_email_dept: dict[str, str] = {e.email: e.department for e in all_emps}
+    user_dept_map: dict[int, str] = {
+        uid: emp_email_dept.get(email, "")
+        for uid, email in user_email_map.items()
+    }
+
+    recent_activity = db.query(models.ActivityLog).filter(
         models.ActivityLog.timestamp >= cutoff
     ).all()
-    all_docs = db.query(models.Document).filter(
+
+    # Document uploads in last 30 days
+    recent_docs = db.query(models.Document).filter(
         models.Document.created_at >= cutoff
     ).all()
 
-    # Build employee dept map
-    emp_dept: dict[str, list] = {}
-    for e in all_emps:
-        emp_dept.setdefault(e.department, []).append(e)
-
-    # Build leave dept map (via employee department)
-    emp_id_to_dept = {e.id: e.department for e in all_emps}
-    leave_dept_counts: dict[str, int] = {}
-    for l in all_leaves:
-        dept = emp_id_to_dept.get(l.employee_id, "")
+    # Aggregate per department
+    # Leave: via employee_id → department
+    leave_by_dept: dict[str, int] = {}
+    for l in recent_leaves:
+        dept = emp_dept_map.get(l.employee_id, "")
         if dept:
-            leave_dept_counts[dept] = leave_dept_counts.get(dept, 0) + 1
+            leave_by_dept[dept] = leave_by_dept.get(dept, 0) + 1
 
-    # Activity by actor_role (best approximation for dept filtering)
-    activity_role_counts: dict[str, int] = {}
-    for a in all_activity:
-        r = a.actor_role or "unknown"
-        activity_role_counts[r] = activity_role_counts.get(r, 0) + 1
+    # Activity: via actor_id → user.email → employee.department
+    activity_by_dept: dict[str, int] = {}
+    for a in recent_activity:
+        if a.actor_id:
+            dept = user_dept_map.get(a.actor_id, "")
+            if dept:
+                activity_by_dept[dept] = activity_by_dept.get(dept, 0) + 1
 
-    # Doc uploads by department
-    doc_dept_counts: dict[str, int] = {}
-    for d in all_docs:
-        dept = d.department or "General"
-        doc_dept_counts[dept] = doc_dept_counts.get(dept, 0) + 1
+    # Docs: via document.department field
+    docs_by_dept: dict[str, int] = {}
+    for d in recent_docs:
+        dept = d.department or ""
+        if dept:
+            docs_by_dept[dept] = docs_by_dept.get(dept, 0) + 1
 
-    departments = []
-    for d in target_depts:
-        emp_list = emp_dept.get(d.name, [])
-        departments.append({
+    # Count employees per department
+    emp_count_by_dept: dict[str, int] = {}
+    for e in all_emps:
+        emp_count_by_dept[e.department] = emp_count_by_dept.get(e.department, 0) + 1
+
+    departments = [
+        {
             "department": d.name,
-            "employee_count": len(emp_list),
-            "leave_requests_30d": leave_dept_counts.get(d.name, 0),
-            "activity_count_30d": sum(
-                1 for a in all_activity
-                if a.description and d.name.lower() in a.description.lower()
-            ),
-            "doc_uploads_30d": doc_dept_counts.get(d.name, 0),
-        })
+            "employee_count": emp_count_by_dept.get(d.name, 0),
+            "leave_requests_30d": leave_by_dept.get(d.name, 0),
+            "activity_count_30d": activity_by_dept.get(d.name, 0),
+            "doc_uploads_30d": docs_by_dept.get(d.name, 0),
+        }
+        for d in target_depts
+    ]
 
     return {
         "scope_dept": scope_dept,
