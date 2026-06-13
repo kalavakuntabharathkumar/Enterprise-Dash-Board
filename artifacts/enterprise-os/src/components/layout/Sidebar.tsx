@@ -16,15 +16,37 @@ interface NavItem {
   href: string;
   icon: any;
   children?: { name: string; href: string }[];
-  adminOnly?: boolean;
+  requiredPermission?: string;
 }
 
 interface NavGroup {
   title: string;
   items: NavItem[];
-  adminOnly?: boolean;
+  requiredPermission?: string;
 }
 
+// Role display labels — covers legacy roles and new RBAC roles
+const ROLE_LABELS: Record<string, string> = {
+  admin: "Administrator",
+  employee: "Employee",
+  super_admin: "Super Admin",
+  hr_manager: "HR Manager",
+  finance_manager: "Finance Manager",
+  project_manager: "Project Manager",
+  department_head: "Department Head",
+};
+
+// Badge color per role category
+function roleBadgeClass(role: string): string {
+  if (role === "admin" || role === "super_admin") return "bg-indigo-500/15 text-indigo-400";
+  if (role === "hr_manager" || role === "department_head") return "bg-amber-500/15 text-amber-400";
+  if (role === "finance_manager") return "bg-emerald-500/15 text-emerald-400";
+  if (role === "project_manager") return "bg-sky-500/15 text-sky-400";
+  return "bg-white/10 text-white/50";
+}
+
+// Full platform nav — items gate themselves via requiredPermission.
+// Shown to any user who is not a plain "employee" (isEmployee === false).
 const ADMIN_NAV: NavGroup[] = [
   {
     title: "Overview",
@@ -41,6 +63,7 @@ const ADMIN_NAV: NavGroup[] = [
         name: "HRMS",
         href: "/hrms",
         icon: Users,
+        requiredPermission: "manage_employees",
         children: [
           { name: "Employees", href: "/hrms" },
           { name: "Departments", href: "/hrms/departments" },
@@ -53,6 +76,7 @@ const ADMIN_NAV: NavGroup[] = [
         name: "CRM",
         href: "/crm",
         icon: Target,
+        requiredPermission: "manage_settings",
         children: [
           { name: "Pipeline", href: "/crm" },
           { name: "Leads", href: "/crm/leads" },
@@ -64,6 +88,7 @@ const ADMIN_NAV: NavGroup[] = [
         name: "ERP",
         href: "/erp",
         icon: Package,
+        requiredPermission: "manage_settings",
         children: [
           { name: "Inventory", href: "/erp" },
           { name: "Vendors", href: "/erp/vendors" },
@@ -74,6 +99,7 @@ const ADMIN_NAV: NavGroup[] = [
         name: "Finance",
         href: "/finance",
         icon: CreditCard,
+        requiredPermission: "view_finance",
         children: [
           { name: "Overview", href: "/finance" },
           { name: "Invoices", href: "/finance/invoices" },
@@ -81,15 +107,20 @@ const ADMIN_NAV: NavGroup[] = [
           { name: "Payslips", href: "/payslips" },
         ],
       },
-      { name: "Projects", href: "/projects", icon: FolderOpen },
+      {
+        name: "Projects",
+        href: "/projects",
+        icon: FolderOpen,
+        requiredPermission: "manage_projects",
+      },
     ],
   },
   {
     title: "Intelligence",
     items: [
-      { name: "Analytics", href: "/analytics", icon: BarChart2 },
+      { name: "Analytics", href: "/analytics", icon: BarChart2, requiredPermission: "view_analytics" },
       { name: "AI Copilot", href: "/ai", icon: Bot },
-      { name: "Workflows", href: "/workflows", icon: Workflow },
+      { name: "Workflows", href: "/workflows", icon: Workflow, requiredPermission: "manage_settings" },
     ],
   },
   {
@@ -97,11 +128,12 @@ const ADMIN_NAV: NavGroup[] = [
     items: [
       { name: "Documents", href: "/documents", icon: FileText },
       { name: "Support Requests", href: "/support", icon: LifeBuoy },
-      { name: "Settings", href: "/settings", icon: Settings },
+      { name: "Settings", href: "/settings", icon: Settings, requiredPermission: "manage_settings" },
     ],
   },
 ];
 
+// Personal-view nav for plain employees
 const EMPLOYEE_NAV: NavGroup[] = [
   {
     title: "Overview",
@@ -152,9 +184,16 @@ const EMPLOYEE_NAV: NavGroup[] = [
 export function Sidebar() {
   const location = useLocation();
   const currentPath = location.pathname;
-  const { logout, user, isAdmin } = useAuth();
+  const { logout, user, isEmployee, hasPermission, permissionsLoaded } = useAuth();
   const navigate = useNavigate();
-  const [expanded, setExpanded] = useState<string[]>(isAdmin ? ["/hrms", "/crm", "/finance"] : []);
+
+  // Non-employee users (admin, hr_manager, finance_manager, etc.) see the platform nav;
+  // plain employees see the personal nav.
+  const useAdminNav = !isEmployee;
+
+  const [expanded, setExpanded] = useState<string[]>(
+    useAdminNav ? ["/hrms", "/crm", "/finance"] : []
+  );
 
   const toggleExpand = (key: string) => {
     setExpanded((prev) =>
@@ -162,7 +201,19 @@ export function Sidebar() {
     );
   };
 
-  const navGroups = isAdmin ? ADMIN_NAV : EMPLOYEE_NAV;
+  // Filter platform nav items by the user's live permissions.
+  // If permissions haven't loaded yet, render the group structure without item-level filtering
+  // so there's no jarring layout shift once they arrive.
+  const filteredAdminNav: NavGroup[] = ADMIN_NAV.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => {
+      if (!item.requiredPermission) return true;
+      if (!permissionsLoaded) return false;
+      return hasPermission(item.requiredPermission);
+    }),
+  })).filter((group) => group.items.length > 0);
+
+  const navGroups = useAdminNav ? filteredAdminNav : EMPLOYEE_NAV;
 
   const isActive = (href: string) =>
     currentPath === href || (href !== "/" && currentPath.startsWith(href + "/"));
@@ -174,7 +225,8 @@ export function Sidebar() {
     ? user.name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()
     : "?";
 
-  const roleLabel = user?.role === "admin" ? "Administrator" : user?.role === "employee" ? "Employee" : user?.role ?? "User";
+  const role = user?.role ?? "employee";
+  const roleLabel = ROLE_LABELS[role] ?? role;
 
   return (
     <div className="w-64 bg-[#0f1117] text-white flex flex-col h-screen fixed top-0 left-0 z-40">
@@ -195,9 +247,9 @@ export function Sidebar() {
       <div className="px-4 py-2 border-b border-white/5">
         <div className={cn(
           "flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-semibold w-fit",
-          isAdmin ? "bg-indigo-500/15 text-indigo-400" : "bg-emerald-500/15 text-emerald-400"
+          roleBadgeClass(role)
         )}>
-          {isAdmin ? <Shield className="w-3 h-3" /> : <UserCircle className="w-3 h-3" />}
+          {useAdminNav ? <Shield className="w-3 h-3" /> : <UserCircle className="w-3 h-3" />}
           {roleLabel}
         </div>
       </div>

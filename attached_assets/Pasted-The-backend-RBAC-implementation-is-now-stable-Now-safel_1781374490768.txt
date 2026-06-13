@@ -1,0 +1,149 @@
+The backend RBAC implementation is now stable.
+
+Now safely implement FRONTEND RBAC integration using the existing architecture WITHOUT redesigning or rewriting the frontend.
+
+IMPORTANT:
+Do NOT redesign the UI.
+Do NOT regenerate pages.
+Do NOT replace routing.
+Do NOT rewrite authentication.
+Do NOT break existing frontend functionality.
+
+Current system state:
+
+* Backend permission middleware exists
+* RBAC tables and permissions exist
+* Existing JWT/auth flow still works
+* users.role string compatibility still exists
+* Backend APIs are permission protected
+
+GOAL:
+Add enterprise-grade frontend permission awareness incrementally and safely.
+
+REQUIRED TASKS
+
+1. Create centralized frontend permission utilities.
+
+Create reusable helpers such as:
+
+* hasPermission(permissionKey)
+* canAccessModule(moduleKey)
+
+Do NOT hardcode role checks throughout components.
+
+GOOD:
+hasPermission("view_finance")
+
+BAD:
+role === "finance_manager"
+
+2. Extend current auth/user store safely.
+
+Current user state should include:
+
+* role
+* permissions
+* department
+* accessible modules
+
+Fetch permissions from:
+GET /api/rbac/users/me/permissions
+
+3. Implement dynamic sidebar rendering.
+
+Sidebar items must render based on permissions.
+
+Examples:
+
+Employee:
+
+* Dashboard
+* Attendance
+* Leaves
+* Payslips
+
+HR Manager:
+
+* Employees
+* Leave Approvals
+* Payroll
+
+Finance Manager:
+
+* Finance
+* Invoices
+* Budgets
+
+Admin:
+
+* Full system access
+
+4. Implement protected frontend routes.
+
+Unauthorized users:
+
+* should not access routes manually
+* should be redirected safely
+* should not see restricted pages
+
+5. Preserve all current UI and design.
+
+Do NOT:
+
+* redesign components
+* regenerate dashboards
+* replace layout system
+
+6. Keep implementation modular.
+
+Create reusable:
+
+* route guards
+* permission hooks
+* permission utilities
+
+Avoid:
+
+* duplicated logic
+* giant auth files
+* scattered permission checks
+
+7. Maintain Replit compatibility.
+8. Preserve current frontend architecture.
+9. Keep all existing pages functional.
+
+BEFORE MODIFYING FILES:
+First analyze:
+
+* current sidebar structure
+* current auth flow
+* current routing structure
+* safest integration points
+
+Then implement incrementally and safely.
+
+FINAL TESTING REQUIREMENTS
+
+After implementation:
+
+1. Create test users for:
+
+* Super Admin
+* HR Manager
+* Finance Manager
+* Employee
+
+2. Return:
+
+* login email
+* password
+* assigned role
+* accessible modules
+
+3. Verify:
+
+* sidebar visibility changes per role
+* unauthorized routes redirect correctly
+* frontend permissions match backend permissions
+
+4. Do NOT remove legacy role compatibility yet.

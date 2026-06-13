@@ -17,6 +17,9 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   isEmployee: boolean;
+  permissions: string[];
+  hasPermission: (key: string) => boolean;
+  permissionsLoaded: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -33,9 +36,24 @@ async function fetchMe(token: string): Promise<UserInfo | null> {
   }
 }
 
+async function fetchPermissions(token: string): Promise<string[]> {
+  try {
+    const res = await fetch("/api/rbac/users/me/permissions", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.permissions ?? []).map((p: { name: string }) => p.name);
+  } catch {
+    return [];
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(localStorage.getItem("enterprise_os_token"));
   const [user, setUser] = useState<UserInfo | null>(null);
+  const [permissions, setPermissions] = useState<string[]>([]);
+  const [permissionsLoaded, setPermissionsLoaded] = useState(false);
 
   useEffect(() => {
     setAuthTokenGetter(() => localStorage.getItem("enterprise_os_token"));
@@ -44,13 +62,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const storedToken = localStorage.getItem("enterprise_os_token");
     if (storedToken && !user) {
-      fetchMe(storedToken).then((u) => {
-        if (u) setUser(u);
-        else {
+      (async () => {
+        const u = await fetchMe(storedToken);
+        if (u) {
+          setUser(u);
+          const perms = await fetchPermissions(storedToken);
+          setPermissions(perms);
+        } else {
           localStorage.removeItem("enterprise_os_token");
           setToken(null);
         }
-      });
+        setPermissionsLoaded(true);
+      })();
+    } else if (!storedToken) {
+      setPermissionsLoaded(true);
     }
   }, []);
 
@@ -58,15 +83,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("enterprise_os_token", newToken);
     setToken(newToken);
     setUser(newUser);
+    setPermissionsLoaded(false);
+    fetchPermissions(newToken).then((perms) => {
+      setPermissions(perms);
+      setPermissionsLoaded(true);
+    });
   };
 
   const logout = () => {
     localStorage.removeItem("enterprise_os_token");
     setToken(null);
     setUser(null);
+    setPermissions([]);
+    setPermissionsLoaded(false);
   };
 
   const role = user?.role ?? null;
+  const hasPermission = (key: string) => permissions.includes(key);
 
   return (
     <AuthContext.Provider value={{
@@ -77,6 +110,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAuthenticated: !!token,
       isAdmin: role === "admin",
       isEmployee: role === "employee",
+      permissions,
+      hasPermission,
+      permissionsLoaded,
     }}>
       {children}
     </AuthContext.Provider>

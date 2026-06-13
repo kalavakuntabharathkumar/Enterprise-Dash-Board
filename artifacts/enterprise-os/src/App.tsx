@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/lib/auth";
 import { ThemeProvider } from "@/lib/theme";
 import { AdminGuard } from "@/components/RoleGuard";
+import { PermissionGuard } from "@/components/PermissionGuard";
 
 import LoginPage from "@/pages/login";
 import AccessDeniedPage from "@/pages/access-denied";
@@ -61,16 +62,16 @@ export default function App() {
                   <Route index element={<Navigate to="/dashboard" replace />} />
                   <Route path="dashboard" element={<Dashboard />} />
 
-                  {/* HRMS — admins only for management; leaves accessible to all */}
+                  {/* HRMS — requires manage_employees permission */}
                   <Route path="hrms">
-                    <Route index element={<AdminGuard><EmployeesPage /></AdminGuard>} />
-                    <Route path="employees/:id" element={<AdminGuard><EmployeeDetailPage /></AdminGuard>} />
-                    <Route path="departments" element={<AdminGuard><DepartmentsPage /></AdminGuard>} />
-                    <Route path="attendance" element={<AdminGuard><AttendancePage /></AdminGuard>} />
+                    <Route index element={<PermissionGuard permission="manage_employees"><EmployeesPage /></PermissionGuard>} />
+                    <Route path="employees/:id" element={<PermissionGuard permission="manage_employees"><EmployeeDetailPage /></PermissionGuard>} />
+                    <Route path="departments" element={<PermissionGuard permission="manage_employees"><DepartmentsPage /></PermissionGuard>} />
+                    <Route path="attendance" element={<PermissionGuard permission="manage_employees"><AttendancePage /></PermissionGuard>} />
                     <Route path="leaves" element={<LeavesPage />} />
                   </Route>
 
-                  {/* CRM — admin only */}
+                  {/* CRM — admin only (no dedicated permission mapped yet) */}
                   <Route path="crm">
                     <Route index element={<AdminGuard><CRMPage /></AdminGuard>} />
                     <Route path="leads" element={<AdminGuard><LeadsPage /></AdminGuard>} />
@@ -78,36 +79,38 @@ export default function App() {
                     <Route path="deals" element={<AdminGuard><DealsKanbanPage /></AdminGuard>} />
                   </Route>
 
-                  {/* ERP — admin only */}
+                  {/* ERP — admin only (no dedicated permission mapped yet) */}
                   <Route path="erp">
                     <Route index element={<AdminGuard><InventoryPage /></AdminGuard>} />
                     <Route path="vendors" element={<AdminGuard><VendorsPage /></AdminGuard>} />
                     <Route path="purchases" element={<AdminGuard><PurchasesPage /></AdminGuard>} />
                   </Route>
 
-                  {/* Finance — admin only */}
+                  {/* Finance — requires view_finance permission */}
                   <Route path="finance">
-                    <Route index element={<AdminGuard><FinanceDashboard /></AdminGuard>} />
-                    <Route path="invoices" element={<AdminGuard><InvoicesPage /></AdminGuard>} />
-                    <Route path="expenses" element={<AdminGuard><ExpensesPage /></AdminGuard>} />
+                    <Route index element={<PermissionGuard permission="view_finance"><FinanceDashboard /></PermissionGuard>} />
+                    <Route path="invoices" element={<PermissionGuard permission="view_finance"><InvoicesPage /></PermissionGuard>} />
+                    <Route path="expenses" element={<PermissionGuard permission="view_finance"><ExpensesPage /></PermissionGuard>} />
                   </Route>
 
-                  {/* Projects — accessible to all */}
+                  {/* Projects — accessible to all authenticated users */}
                   <Route path="projects">
                     <Route index element={<ProjectsPage />} />
                     <Route path=":id" element={<ProjectDetailPage />} />
                   </Route>
 
-                  {/* Analytics & Workflows — admin only */}
-                  <Route path="analytics" element={<AdminGuard><AnalyticsPage /></AdminGuard>} />
+                  {/* Analytics — requires view_analytics permission */}
+                  <Route path="analytics" element={<PermissionGuard permission="view_analytics"><AnalyticsPage /></PermissionGuard>} />
+
+                  {/* Workflows — admin only */}
                   <Route path="workflows" element={<AdminGuard><WorkflowsPage /></AdminGuard>} />
 
-                  {/* Accessible to all */}
+                  {/* Accessible to all authenticated users */}
                   <Route path="ai" element={<AiCopilotPage />} />
                   <Route path="notifications" element={<NotificationsPage />} />
                   <Route path="settings" element={<SettingsPage />} />
 
-                  {/* New employee experience modules — accessible to all */}
+                  {/* Employee experience modules */}
                   <Route path="my-leaves" element={<MyLeavesPage />} />
                   <Route path="payslips" element={<PayslipsPage />} />
                   <Route path="profile" element={<ProfilePage />} />
