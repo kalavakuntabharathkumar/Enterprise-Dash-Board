@@ -11,6 +11,7 @@ from app.api.routes import (
 )
 from app.api.routes import export
 from app.api.routes import payslips, profiles, announcements, timesheets, support, documents
+from app.api.routes import rbac
 
 app = FastAPI(title="Enterprise OS API", version="1.0.0")
 
@@ -53,6 +54,7 @@ app.include_router(announcements.router, prefix=API_PREFIX)
 app.include_router(timesheets.router, prefix=API_PREFIX)
 app.include_router(support.router, prefix=API_PREFIX)
 app.include_router(documents.router, prefix=API_PREFIX)
+app.include_router(rbac.router, prefix=API_PREFIX)
 
 
 @app.get("/api/healthz")
@@ -63,6 +65,28 @@ def health_check():
 @app.on_event("startup")
 def startup():
     create_tables()
+
+    # ── Safe column migration (raw SQL, before any ORM query touches users) ──
+    from sqlalchemy import text
+    from app.database import engine
+    with engine.connect() as _conn:
+        try:
+            result = _conn.execute(text("PRAGMA table_info(users)"))
+            existing_cols = {row[1] for row in result.fetchall()}
+            altered = False
+            for col_sql in [
+                "ALTER TABLE users ADD COLUMN role_id INTEGER REFERENCES roles(id)",
+                "ALTER TABLE users ADD COLUMN department_id INTEGER REFERENCES departments(id)",
+            ]:
+                col_name = col_sql.split("ADD COLUMN ")[1].split(" ")[0]
+                if col_name not in existing_cols:
+                    _conn.execute(text(col_sql))
+                    altered = True
+            if altered:
+                _conn.commit()
+        except Exception as _e:
+            print(f"Column migration error (non-fatal): {_e}")
+
     from app.database import SessionLocal
     db = SessionLocal()
     try:
@@ -362,6 +386,72 @@ def startup():
                     skills="Python,TypeScript,React,FastAPI,PostgreSQL,Docker",
                     bio="Full-stack software engineer with 3 years of experience building enterprise applications. Passionate about clean code and developer experience.",
                 ))
+
+        # ── RBAC: Roles ─────────────────────────────────────────────────
+        ROLE_DEFS = [
+            ("Super Admin",       "Full unrestricted access to all modules and settings",   True),
+            ("Admin",             "Full access to all modules; can manage users and data",  True),
+            ("HR Manager",        "Manage employees, leave, attendance, and payroll",        True),
+            ("Finance Manager",   "Access to finance, invoices, expenses, and payroll",     True),
+            ("Project Manager",   "Manage projects, tasks, milestones, and timesheets",     True),
+            ("Department Head",   "View and manage their department's employees and data",  True),
+            ("Employee",          "Access to personal modules: leaves, payslips, profile",  True),
+        ]
+        if db.query(models.Role).count() == 0:
+            for name, desc, is_sys in ROLE_DEFS:
+                db.add(models.Role(name=name, description=desc, is_system=is_sys))
+            db.flush()
+
+        # ── RBAC: Permissions ───────────────────────────────────────────
+        PERM_DEFS = [
+            ("view_dashboard",    "View the main dashboard and KPI cards",          "dashboard"),
+            ("manage_employees",  "Create, edit, and deactivate employee records",  "hrms"),
+            ("approve_leave",     "Approve or reject employee leave requests",       "hrms"),
+            ("manage_payroll",    "Access and process payslips and salary data",     "finance"),
+            ("view_finance",      "View invoices, expenses, and financial reports",  "finance"),
+            ("manage_projects",   "Create and manage projects, tasks, milestones",   "projects"),
+            ("view_analytics",    "Access analytics dashboards and reports",         "analytics"),
+            ("manage_settings",   "Manage system settings and user accounts",        "settings"),
+        ]
+        if db.query(models.Permission).count() == 0:
+            for name, desc, module in PERM_DEFS:
+                db.add(models.Permission(name=name, description=desc, module=module))
+            db.flush()
+
+        # ── RBAC: Role-Permission mapping ───────────────────────────────
+        if db.query(models.RolePermission).count() == 0:
+            ALL_PERMS = [p[0] for p in PERM_DEFS]
+            ROLE_PERM_MAP = {
+                "Super Admin":      ALL_PERMS,
+                "Admin":            ALL_PERMS,
+                "HR Manager":       ["view_dashboard", "manage_employees", "approve_leave", "manage_payroll", "view_analytics"],
+                "Finance Manager":  ["view_dashboard", "manage_payroll", "view_finance", "view_analytics"],
+                "Project Manager":  ["view_dashboard", "manage_projects", "view_analytics"],
+                "Department Head":  ["view_dashboard", "manage_employees", "approve_leave", "view_analytics"],
+                "Employee":         ["view_dashboard"],
+            }
+            roles_map = {r.name: r.id for r in db.query(models.Role).all()}
+            perms_map = {p.name: p.id for p in db.query(models.Permission).all()}
+            for role_name, perm_names in ROLE_PERM_MAP.items():
+                role_id = roles_map.get(role_name)
+                if not role_id:
+                    continue
+                for perm_name in perm_names:
+                    perm_id = perms_map.get(perm_name)
+                    if perm_id:
+                        db.add(models.RolePermission(role_id=role_id, permission_id=perm_id))
+            db.flush()
+
+        # ── RBAC: Link existing users to their roles ────────────────────
+        roles_map = {r.name: r.id for r in db.query(models.Role).all()}
+        depts_map = {d.name: d.id for d in db.query(models.Department).all()}
+        admin_user = db.query(models.User).filter(models.User.email == "admin@enterpriseos.com").first()
+        if admin_user and not admin_user.role_id:
+            admin_user.role_id = roles_map.get("Admin")
+        emp_user = db.query(models.User).filter(models.User.email == "employee@enterpriseos.com").first()
+        if emp_user and not emp_user.role_id:
+            emp_user.role_id = roles_map.get("Employee")
+            emp_user.department_id = depts_map.get("Engineering")
 
         db.commit()
     except Exception as e:
