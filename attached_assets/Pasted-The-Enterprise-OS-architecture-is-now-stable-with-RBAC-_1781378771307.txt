@@ -1,0 +1,174 @@
+The Enterprise OS architecture is now stable with:
+
+* RBAC
+* workflow approvals
+* notifications
+* activity feeds
+* department-level scoped access
+
+Now safely implement a Role-Personalized Dashboard System WITHOUT rewriting the existing frontend architecture.
+
+IMPORTANT:
+Do NOT redesign the UI.
+Do NOT regenerate unrelated pages.
+Do NOT rewrite RBAC or workflows.
+Do NOT duplicate dashboard pages.
+Do NOT create giant role-based condition files.
+
+Current system state:
+
+* Dynamic sidebar exists
+* Scoped APIs exist
+* Notifications exist
+* Activity feed exists
+* Workflow approvals exist
+* Department isolation exists
+
+GOAL:
+Transform the existing dashboard into a modular role-aware enterprise dashboard.
+
+REQUIRED TASKS
+
+1. Create modular dashboard widget architecture.
+
+Create:
+src/components/dashboard/widgets/
+
+Organize widgets by responsibility:
+
+* employee/
+* hr/
+* finance/
+* department/
+* shared/
+
+2. Create centralized dashboard widget registry.
+
+Create:
+src/lib/dashboard-config.ts
+
+The registry should map:
+
+* permissions
+* roles
+* scope types
+
+to widget visibility.
+
+GOOD:
+show widget based on permissions + scoped access
+
+BAD:
+massive nested if(role === ...)
+
+3. Implement role-personalized dashboard rendering.
+
+Examples:
+
+Employee dashboard:
+
+* My Leave Requests
+* Personal Notifications
+* Recent Activity
+
+HR dashboard:
+
+* Pending Leave Approvals
+* Employee Distribution
+* Workforce Metrics
+
+Finance dashboard:
+
+* Expense Summary
+* Pending Financial Actions
+* Budget Alerts
+
+Department Head dashboard:
+
+* Team Leave Queue
+* Department Activity
+* Team Metrics
+
+4. Reuse existing APIs.
+
+Use:
+
+* notifications APIs
+* activity APIs
+* scoped employee APIs
+* workflow APIs
+
+Do NOT create duplicate backend logic unnecessarily.
+
+5. Keep widgets lightweight and modular.
+
+Each widget should:
+
+* fetch only required data
+* remain independently reusable
+* avoid giant dashboard files
+
+6. Preserve current dashboard structure.
+
+Do NOT:
+
+* redesign layout
+* replace navbar/sidebar
+* rewrite routing
+
+Only enhance the current dashboard safely.
+
+7. Add dashboard summary cards dynamically.
+
+Examples:
+
+* Pending approvals
+* Team members
+* Active leave requests
+* Unread notifications
+
+based on role visibility.
+
+8. Keep implementation scalable.
+
+Future roles like:
+
+* CRM Manager
+* ERP Manager
+
+should be easy to support later.
+
+9. Maintain SQLite compatibility.
+10. Maintain Replit compatibility.
+
+IMPORTANT IMPLEMENTATION RULES
+
+* Prefer composition over giant conditions
+* Keep widgets self-contained
+* Reuse existing RBAC + scoping logic
+* Preserve current frontend stability
+* Avoid duplicated API calls where possible
+* Maintain responsive layout
+
+BEFORE MODIFYING FILES:
+First analyze:
+
+* current dashboard architecture
+* safest widget insertion points
+* existing reusable dashboard cards
+* how scoped APIs should drive widgets
+
+Then implement incrementally and safely.
+
+FINAL TESTING REQUIREMENTS
+
+Verify:
+
+* Employees see only personal widgets
+* HR Managers see approval widgets
+* Department Heads see department-scoped widgets
+* Finance Managers see finance widgets
+* Widgets respect scoped backend APIs
+* Existing dashboard layout remains stable
+* No frontend routes break
+* Sidebar behavior remains unchanged
