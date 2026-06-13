@@ -1,0 +1,140 @@
+The RBAC system, workflow engine, notifications, and activity feed are now stable.
+
+Now safely implement Department-Level Data Isolation and Scoped Access Control WITHOUT rewriting the existing architecture.
+
+IMPORTANT:
+Do NOT redesign the frontend.
+Do NOT rewrite RBAC.
+Do NOT replace workflow logic.
+Do NOT regenerate unrelated modules.
+Do NOT overengineer multi-tenancy.
+
+Current system state:
+
+* RBAC is stable
+* Workflow engine exists
+* Notifications exist
+* Activity feeds exist
+* Users already contain department_id
+* Departments table already exists
+* SQLite database is active
+
+GOAL:
+Implement enterprise-style department-scoped data visibility.
+
+REQUIRED TASKS
+
+1. Create centralized scoped-access utilities.
+
+Create reusable helper utilities:
+
+backend/app/core/scoping.py
+
+Add reusable functions such as:
+
+* is_same_department(user, target_user)
+* scope_employee_query(user, query)
+* scope_leave_query(user, query)
+* can_access_department(user, department_id)
+
+2. Implement department-based visibility rules.
+
+Employee:
+
+* can access only own records
+
+Department Head:
+
+* can access employees within their department
+* can approve leave requests only for their department
+
+HR Manager:
+
+* can access organization-wide HR data
+
+Finance Manager:
+
+* can access finance data organization-wide
+* should not gain unrestricted HR visibility
+
+Admin/Super Admin:
+
+* full visibility
+
+3. Apply scoped filtering safely to:
+
+* employee APIs
+* leave request APIs
+* dashboard employee widgets
+* activity feeds where appropriate
+
+4. Keep RBAC and scoping separate.
+
+RBAC controls:
+
+* module/page access
+
+Scoping controls:
+
+* which records are visible
+
+Do NOT mix both responsibilities together.
+
+5. Create centralized query filtering.
+
+GOOD:
+scope_employee_query(current_user, query)
+
+BAD:
+manual filtering duplicated in every route
+
+6. Preserve existing architecture.
+
+Do NOT:
+
+* rewrite auth
+* rewrite workflows
+* redesign dashboards
+* replace route guards
+
+7. Keep implementation modular and lightweight.
+
+Avoid:
+
+* giant permission files
+* hardcoded department checks everywhere
+* duplicated query logic
+
+8. Maintain SQLite compatibility.
+9. Maintain Replit compatibility.
+
+IMPORTANT IMPLEMENTATION RULES
+
+* Department Heads should never see other department data
+* Employees should never access other employee records
+* HR/Admin remain organization-wide
+* Reuse existing RBAC utilities
+* Keep business logic centralized
+* Preserve current frontend behavior while safely filtering returned data
+
+BEFORE MODIFYING FILES:
+First analyze:
+
+* existing department relationships
+* safest query interception points
+* which APIs require scoped filtering first
+* how workflow approvals should validate department ownership
+
+Then implement incrementally and safely.
+
+FINAL TESTING REQUIREMENTS
+
+Verify:
+
+* Department Heads see only their department employees
+* Employees see only their own leave requests
+* HR Managers still see organization-wide data
+* Finance Managers cannot access HR employee datasets
+* Leave approvals reject cross-department actions
+* Activity feeds remain properly scoped
+* Existing dashboards remain functional

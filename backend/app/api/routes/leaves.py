@@ -6,6 +6,7 @@ from app.database import get_db
 from app import models
 from app.core.security import get_current_user
 from app.core.rbac import require_permission
+from app.core.scoping import scope_leave_query, validate_leave_approval_scope
 from app.workflows.service import LeaveWorkflowService
 
 router = APIRouter(prefix="/leaves", tags=["leaves"])
@@ -63,12 +64,11 @@ class LeaveActionInput(BaseModel):
 # ── Routes ─────────────────────────────────────────────────────────────────────
 
 @router.get("")
-def list_leaves(db: Session = Depends(get_db), _=Depends(get_current_user)):
-    """List all leave requests — any authenticated user."""
-    return [
-        leave_to_dict(l, db)
-        for l in db.query(models.LeaveRequest).order_by(models.LeaveRequest.id.desc()).all()
-    ]
+def list_leaves(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    """List leave requests scoped to the current user's department visibility."""
+    q = db.query(models.LeaveRequest).order_by(models.LeaveRequest.id.desc())
+    q = scope_leave_query(current_user, db, q)
+    return [leave_to_dict(l, db) for l in q.all()]
 
 
 @router.post("", status_code=201)
@@ -120,10 +120,17 @@ def perform_leave_action(
     """Workflow action: advance leave through approval stages.
 
     Requires: approve_leave permission (HR Manager, Department Head, Admin).
+    Department Heads may only act on leaves for employees in their own department.
     Body: { action: "approve" | "reject", comments?: string }
     """
     if body.action not in ("approve", "reject"):
         raise HTTPException(status_code=400, detail="action must be 'approve' or 'reject'")
+
+    leave = db.query(models.LeaveRequest).filter(models.LeaveRequest.id == id).first()
+    if not leave:
+        raise HTTPException(status_code=404, detail="Leave request not found")
+
+    validate_leave_approval_scope(current_user, leave, db)
 
     svc = LeaveWorkflowService(db)
     leave = svc.action(id, body.action, current_user, body.comments)

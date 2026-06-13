@@ -7,6 +7,7 @@ from app.database import get_db
 from app import models
 from app.core.security import get_current_user
 from app.core.rbac import require_permission
+from app.core.scoping import scope_employee_query, get_effective_scope
 
 router = APIRouter(prefix="/employees", tags=["employees"])
 
@@ -51,9 +52,10 @@ def list_employees(
     status: Optional[str] = None,
     search: Optional[str] = None,
     db: Session = Depends(get_db),
-    _=Depends(get_current_user),
+    current_user=Depends(get_current_user),
 ):
     q = db.query(models.Employee)
+    q = scope_employee_query(current_user, db, q)
     if department:
         q = q.filter(models.Employee.department == department)
     if status:
@@ -64,22 +66,48 @@ def list_employees(
 
 
 @router.get("/stats")
-def get_employee_stats(db: Session = Depends(get_db), _=Depends(get_current_user)):
-    total = db.query(models.Employee).count()
-    active = db.query(models.Employee).filter(models.Employee.status == "active").count()
-    on_leave = db.query(models.Employee).filter(models.Employee.status == "on_leave").count()
-    by_dept = db.query(models.Employee.department, func.count(models.Employee.id)).group_by(models.Employee.department).all()
+def get_employee_stats(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    scope = get_effective_scope(current_user, db)
+    level = scope["level"]
+
+    base_q = db.query(models.Employee)
+    base_q = scope_employee_query(current_user, db, base_q)
+    employees = base_q.all()
+
+    total = len(employees)
+    active = sum(1 for e in employees if e.status == "active")
+    on_leave = sum(1 for e in employees if e.status == "on_leave")
+
+    dept_counts: dict = {}
+    for e in employees:
+        dept_counts[e.department] = dept_counts.get(e.department, 0) + 1
+
     return {
-        "total": total, "active": active, "on_leave": on_leave,
-        "by_department": [{"name": d, "value": c} for d, c in by_dept],
+        "total": total,
+        "active": active,
+        "on_leave": on_leave,
+        "by_department": [{"name": d, "value": c} for d, c in dept_counts.items()],
+        "scope_level": level,
     }
 
 
 @router.get("/{id}")
-def get_employee(id: int, db: Session = Depends(get_db), _=Depends(get_current_user)):
+def get_employee(id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    scope = get_effective_scope(current_user, db)
+    level = scope["level"]
+
     e = db.query(models.Employee).filter(models.Employee.id == id).first()
     if not e:
         raise HTTPException(status_code=404, detail="Employee not found")
+
+    # Non-admin/HR users can only fetch records they have dept/own access to
+    if level in ("employee", "finance_manager"):
+        if e.email != current_user.email:
+            raise HTTPException(status_code=403, detail="Access denied: you may only view your own employee record.")
+    elif level == "dept_head" and scope["dept"]:
+        if e.department != scope["dept"]:
+            raise HTTPException(status_code=403, detail=f"Access denied: employee is not in your department ({scope['dept']}).")
+
     return emp_to_dict(e)
 
 

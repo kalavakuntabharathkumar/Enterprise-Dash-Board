@@ -472,6 +472,9 @@ def startup():
             ("Frank Finance", "finance@enterpriseos.com", "finance123", "finance_manager", "Finance Manager", "Finance"),
             ("Max Projects", "pm@enterpriseos.com", "pm1234", "project_manager", "Project Manager", "Engineering"),
             ("Super Admin", "superadmin@enterpriseos.com", "super123", "super_admin", "Super Admin", None),
+            # Dept head test accounts — emails match Employee records so scoping auto-detects correctly
+            ("Sarah Chen", "sarah.chen@co.com", "dept1234", "dept_head", "Department Head", "Engineering"),
+            ("Marcus Johnson", "marcus.j@co.com", "dept1234", "dept_head", "Department Head", "Sales"),
         ]
         from sqlalchemy import text as _text
         existing_emails = {row[0] for row in db.execute(_text("SELECT email FROM users")).fetchall()}

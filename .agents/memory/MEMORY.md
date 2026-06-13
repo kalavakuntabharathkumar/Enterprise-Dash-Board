@@ -1,2 +1,3 @@
 - [Enterprise OS backend quirks](enterprise-os-backend.md) — passlib/bcrypt incompatibility, ENTERPRISE_DB_URL, custom-fetch export, Python FastAPI replacing Node api-server
 - [Leave Workflow Engine](leave-workflow-engine.md) — multi-step approval state machine, ORM model columns must match DB columns added via ALTER TABLE
+- [Department Scoping System](dept-scoping.md) — centralized scoping.py separates data visibility from RBAC; scope levels, test credentials, and key design rules
