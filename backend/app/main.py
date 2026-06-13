@@ -81,6 +81,12 @@ def startup():
         ("leave_requests", "updated_at",             "ALTER TABLE leave_requests ADD COLUMN updated_at TEXT"),
         ("notifications",  "user_id",                "ALTER TABLE notifications ADD COLUMN user_id INTEGER"),
         ("notifications",  "target_role",            "ALTER TABLE notifications ADD COLUMN target_role TEXT"),
+        # DMS extended columns
+        ("documents",      "category",               "ALTER TABLE documents ADD COLUMN category TEXT DEFAULT 'General'"),
+        ("documents",      "visibility",             "ALTER TABLE documents ADD COLUMN visibility TEXT DEFAULT 'private'"),
+        ("documents",      "description",            "ALTER TABLE documents ADD COLUMN description TEXT"),
+        ("documents",      "department",             "ALTER TABLE documents ADD COLUMN department TEXT"),
+        ("documents",      "uploaded_by_user_id",    "ALTER TABLE documents ADD COLUMN uploaded_by_user_id INTEGER REFERENCES users(id)"),
     ]
 
     with engine.connect() as _conn:
@@ -366,21 +372,39 @@ def startup():
                 ]
                 db.add_all(reqs)
 
-        # ── NEW: Documents ──────────────────────────────────────────────
+        # ── DMS: Documents (with visibility + category) ─────────────────
         if db.query(models.Document).count() == 0:
             jordan = db.query(models.Employee).filter(models.Employee.email == "employee@enterpriseos.com").first()
+            admin_user = db.query(models.User).filter(models.User.email == "admin@enterpriseos.com").first()
+            hr_user    = db.query(models.User).filter(models.User.email == "hr@enterpriseos.com").first()
+            fin_user   = db.query(models.User).filter(models.User.email == "finance@enterpriseos.com").first()
+            emp_user   = db.query(models.User).filter(models.User.email == "employee@enterpriseos.com").first()
+
+            admin_id = admin_user.id if admin_user else None
+            hr_id    = hr_user.id if hr_user else admin_id
+            fin_id   = fin_user.id if fin_user else admin_id
+
             docs = [
-                models.Document(title="Employee Handbook 2024", doc_type="policy", filename="employee_handbook_2024.pdf", size_kb=2048, uploaded_by="HR Team", is_company_doc=True),
-                models.Document(title="Code of Conduct", doc_type="policy", filename="code_of_conduct.pdf", size_kb=512, uploaded_by="HR Team", is_company_doc=True),
-                models.Document(title="Benefits Guide 2024", doc_type="policy", filename="benefits_guide_2024.pdf", size_kb=1024, uploaded_by="James Wilson", is_company_doc=True),
-                models.Document(title="Remote Work Policy", doc_type="policy", filename="remote_work_policy.pdf", size_kb=256, uploaded_by="HR Team", is_company_doc=True),
-                models.Document(title="IT Security Guidelines", doc_type="policy", filename="it_security_guidelines.pdf", size_kb=384, uploaded_by="Sarah Chen", is_company_doc=True),
-                models.Document(title="Expense Reimbursement Policy", doc_type="policy", filename="expense_policy.pdf", size_kb=196, uploaded_by="Priya Patel", is_company_doc=True),
+                # Organization-wide HR policies
+                models.Document(title="Employee Handbook 2024", doc_type="policy", filename="employee_handbook_2024.pdf", size_kb=2048, uploaded_by="HR Team", uploaded_by_user_id=hr_id, is_company_doc=True, category="HR", visibility="organization", description="Complete employee policy guide for 2024"),
+                models.Document(title="Code of Conduct", doc_type="policy", filename="code_of_conduct.pdf", size_kb=512, uploaded_by="HR Team", uploaded_by_user_id=hr_id, is_company_doc=True, category="HR", visibility="organization", description="Company standards of professional conduct"),
+                models.Document(title="Remote Work Policy", doc_type="policy", filename="remote_work_policy.pdf", size_kb=256, uploaded_by="HR Team", uploaded_by_user_id=hr_id, is_company_doc=True, category="HR", visibility="organization", description="Guidelines for remote and hybrid working arrangements"),
+                # HR-only documents
+                models.Document(title="Benefits Guide 2024", doc_type="policy", filename="benefits_guide_2024.pdf", size_kb=1024, uploaded_by="James Wilson", uploaded_by_user_id=hr_id, is_company_doc=True, category="HR", visibility="hr_only", description="Confidential HR benefits administration guide"),
+                models.Document(title="Salary Bands 2024", doc_type="report", filename="salary_bands_2024.pdf", size_kb=640, uploaded_by="James Wilson", uploaded_by_user_id=hr_id, is_company_doc=True, category="HR", visibility="hr_only", description="Compensation structure and salary ranges by role"),
+                # Finance-only documents
+                models.Document(title="Q1 2024 Financial Report", doc_type="report", filename="q1_2024_financials.pdf", size_kb=1536, uploaded_by="Priya Patel", uploaded_by_user_id=fin_id, is_company_doc=True, category="Finance", visibility="finance_only", description="Quarterly P&L, balance sheet, and forecasts"),
+                models.Document(title="Expense Reimbursement Policy", doc_type="policy", filename="expense_policy.pdf", size_kb=196, uploaded_by="Priya Patel", uploaded_by_user_id=fin_id, is_company_doc=True, category="Finance", visibility="organization", description="How to submit and get approved for expense reimbursements"),
+                models.Document(title="Budget Allocation FY2024", doc_type="report", filename="budget_fy2024.pdf", size_kb=820, uploaded_by="Priya Patel", uploaded_by_user_id=fin_id, is_company_doc=True, category="Finance", visibility="finance_only", description="Department budget allocations and spend limits"),
+                # Engineering department docs
+                models.Document(title="IT Security Guidelines", doc_type="policy", filename="it_security_guidelines.pdf", size_kb=384, uploaded_by="Sarah Chen", uploaded_by_user_id=admin_id, is_company_doc=True, category="IT", visibility="organization", description="Security policies for all staff — password, 2FA, device management"),
+                models.Document(title="Engineering Onboarding Guide", doc_type="guide", filename="eng_onboarding.pdf", size_kb=712, uploaded_by="Sarah Chen", uploaded_by_user_id=admin_id, is_company_doc=True, category="Engineering", visibility="department", department="Engineering", description="Step-by-step guide for new Engineering hires"),
+                models.Document(title="Architecture Decision Records", doc_type="technical", filename="adr_2024.pdf", size_kb=960, uploaded_by="Sarah Chen", uploaded_by_user_id=admin_id, is_company_doc=True, category="Engineering", visibility="department", department="Engineering", description="Key architectural decisions and their rationale"),
             ]
-            if jordan:
+            if jordan and emp_user:
                 docs += [
-                    models.Document(title="Offer Letter — Jordan Lee", doc_type="offer_letter", filename="offer_letter_jordan.pdf", size_kb=128, uploaded_by="HR Team", employee_id=jordan.id, is_company_doc=False),
-                    models.Document(title="Employment Contract", doc_type="contract", filename="employment_contract_jordan.pdf", size_kb=320, uploaded_by="HR Team", employee_id=jordan.id, is_company_doc=False),
+                    models.Document(title="Offer Letter — Jordan Lee", doc_type="offer_letter", filename="offer_letter_jordan.pdf", size_kb=128, uploaded_by="HR Team", uploaded_by_user_id=hr_id, employee_id=jordan.id, is_company_doc=False, category="HR", visibility="private", description="Original employment offer letter"),
+                    models.Document(title="Employment Contract", doc_type="contract", filename="employment_contract_jordan.pdf", size_kb=320, uploaded_by="HR Team", uploaded_by_user_id=hr_id, employee_id=jordan.id, is_company_doc=False, category="HR", visibility="private", description="Signed employment agreement"),
                 ]
             db.add_all(docs)
 

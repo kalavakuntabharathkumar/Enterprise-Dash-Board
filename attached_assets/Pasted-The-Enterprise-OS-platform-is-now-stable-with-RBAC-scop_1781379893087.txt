@@ -1,0 +1,176 @@
+The Enterprise OS platform is now stable with:
+
+* RBAC
+* scoped access control
+* workflow approvals
+* notifications
+* activity feeds
+* role-personalized dashboards
+
+Now safely implement an Enterprise Document Management System (DMS) foundation WITHOUT rewriting the existing architecture.
+
+IMPORTANT:
+Do NOT redesign the frontend.
+Do NOT rewrite RBAC or scoped access.
+Do NOT regenerate unrelated modules.
+Do NOT build a cloud storage platform.
+Do NOT overengineer.
+
+Current system state:
+
+* Scoped APIs exist
+* Department isolation exists
+* Notifications exist
+* Activity feeds exist
+* Workflow engine exists
+* SQLite database is active
+
+GOAL:
+Create a modular enterprise-style document management foundation with permission-aware access control.
+
+REQUIRED TASKS
+
+1. Create document database architecture.
+
+Create tables:
+
+documents
+
+* id
+* name
+* file_path
+* file_type
+* uploaded_by
+* department_id
+* category
+* visibility
+* created_at
+
+document_access
+
+* id
+* document_id
+* user_id
+* role_id
+* access_type
+
+2. Support document visibility levels.
+
+Examples:
+
+* private
+* department
+* role_based
+* organization
+
+3. Create modular backend structure.
+
+Create:
+backend/app/documents/
+
+* routes
+* services
+* schemas
+* utils
+
+4. Implement secure scoped document access.
+
+Employee:
+
+* own uploaded documents
+* explicitly shared documents
+
+Department Head:
+
+* department documents only
+
+HR Manager:
+
+* HR organization-wide documents
+
+Finance Manager:
+
+* finance organization-wide documents
+
+Admin:
+
+* full access
+
+5. Implement upload/download APIs safely.
+
+Features:
+
+* upload document
+* list accessible documents
+* download document
+* delete own/admin documents
+
+6. Reuse existing RBAC + scoping systems.
+
+Do NOT duplicate:
+
+* permission logic
+* department filtering
+
+Reuse centralized architecture.
+
+7. Create activity + notification integration.
+
+Examples:
+
+* document uploaded
+* document shared
+* document approved
+
+8. Preserve existing frontend architecture.
+
+Do NOT:
+
+* redesign dashboard
+* rewrite sidebar
+* replace routing
+
+9. Create lightweight frontend document module.
+
+Features:
+
+* upload modal
+* document table
+* visibility badges
+* scoped document listing
+
+10. Maintain SQLite compatibility.
+11. Maintain Replit compatibility.
+
+IMPORTANT IMPLEMENTATION RULES
+
+* Keep document logic modular
+* Avoid giant route files
+* Avoid hardcoded role checks
+* Preserve current architecture cleanliness
+* Use scoped filtering everywhere
+* Log important document events
+* Respect department-level isolation
+
+BEFORE MODIFYING FILES:
+First analyze:
+
+* existing file upload utilities
+* safest frontend integration point
+* how scoped access should apply to documents
+* how activity/notifications should integrate
+
+Then implement incrementally and safely.
+
+FINAL TESTING REQUIREMENTS
+
+Verify:
+
+* Employees see only allowed documents
+* Department Heads see department-scoped documents
+* HR/Finance access respects organizational scope
+* Admin has full visibility
+* Upload/download permissions work correctly
+* Activity logs record document actions
+* Notifications trigger correctly
+* Existing dashboards and workflows remain stable

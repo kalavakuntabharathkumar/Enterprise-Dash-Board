@@ -323,9 +323,26 @@ class Document(Base):
     filename = Column(String, nullable=False)
     size_kb = Column(Integer, default=0)
     uploaded_by = Column(String, nullable=True)
+    uploaded_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     employee_id = Column(Integer, ForeignKey("employees.id"), nullable=True)
     is_company_doc = Column(Boolean, default=False)
+    # DMS extended fields
+    category = Column(String, nullable=True, default="General")
+    visibility = Column(String, nullable=False, default="private")
+    description = Column(Text, nullable=True)
+    department = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class DocumentAccess(Base):
+    """Explicit per-user document sharing grants."""
+    __tablename__ = "document_access"
+    id = Column(Integer, primary_key=True, index=True)
+    document_id = Column(Integer, ForeignKey("documents.id"), nullable=False)
+    user_id = Column(Integer, nullable=False)
+    access_type = Column(String, default="view")   # "view" | "edit"
+    granted_by = Column(Integer, nullable=True)
+    granted_at = Column(DateTime, default=datetime.utcnow)
 
 
 # ── Workflow Engine ────────────────────────────────────────────────────────────
