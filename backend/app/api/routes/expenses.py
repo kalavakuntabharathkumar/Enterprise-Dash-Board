@@ -4,6 +4,7 @@ from typing import Optional
 from pydantic import BaseModel
 from app.database import get_db
 from app import models
+from app.core.rbac import require_permission
 
 router = APIRouter(prefix="/expenses", tags=["expenses"])
 
@@ -31,7 +32,11 @@ class ExpenseUpdate(BaseModel):
 
 
 @router.get("")
-def list_expenses(category: Optional[str] = None, db: Session = Depends(get_db)):
+def list_expenses(
+    category: Optional[str] = None,
+    db: Session = Depends(get_db),
+    _=Depends(require_permission("view_finance")),
+):
     q = db.query(models.Expense)
     if category:
         q = q.filter(models.Expense.category == category)
@@ -39,7 +44,11 @@ def list_expenses(category: Optional[str] = None, db: Session = Depends(get_db))
 
 
 @router.post("", status_code=201)
-def create_expense(body: ExpenseInput, db: Session = Depends(get_db)):
+def create_expense(
+    body: ExpenseInput,
+    db: Session = Depends(get_db),
+    _=Depends(require_permission("view_finance")),
+):
     e = models.Expense(**body.model_dump())
     db.add(e)
     db.commit()
@@ -48,7 +57,12 @@ def create_expense(body: ExpenseInput, db: Session = Depends(get_db)):
 
 
 @router.patch("/{id}")
-def update_expense(id: int, body: ExpenseUpdate, db: Session = Depends(get_db)):
+def update_expense(
+    id: int,
+    body: ExpenseUpdate,
+    db: Session = Depends(get_db),
+    _=Depends(require_permission("view_finance")),
+):
     e = db.query(models.Expense).filter(models.Expense.id == id).first()
     if not e:
         raise HTTPException(status_code=404, detail="Not found")
@@ -60,7 +74,11 @@ def update_expense(id: int, body: ExpenseUpdate, db: Session = Depends(get_db)):
 
 
 @router.delete("/{id}", status_code=204)
-def delete_expense(id: int, db: Session = Depends(get_db)):
+def delete_expense(
+    id: int,
+    db: Session = Depends(get_db),
+    _=Depends(require_permission("view_finance")),
+):
     e = db.query(models.Expense).filter(models.Expense.id == id).first()
     if not e:
         raise HTTPException(status_code=404, detail="Not found")

@@ -5,6 +5,8 @@ from typing import Optional
 from pydantic import BaseModel
 from app.database import get_db
 from app import models
+from app.core.security import get_current_user
+from app.core.rbac import require_permission
 
 router = APIRouter(prefix="/employees", tags=["employees"])
 
@@ -41,8 +43,16 @@ class EmployeeUpdate(BaseModel):
     location: Optional[str] = None
 
 
+# ── Read endpoints — require login only (used by both admin HRMS and employee Directory) ──
+
 @router.get("")
-def list_employees(department: Optional[str] = None, status: Optional[str] = None, search: Optional[str] = None, db: Session = Depends(get_db)):
+def list_employees(
+    department: Optional[str] = None,
+    status: Optional[str] = None,
+    search: Optional[str] = None,
+    db: Session = Depends(get_db),
+    _=Depends(get_current_user),
+):
     q = db.query(models.Employee)
     if department:
         q = q.filter(models.Employee.department == department)
@@ -53,17 +63,8 @@ def list_employees(department: Optional[str] = None, status: Optional[str] = Non
     return [emp_to_dict(e) for e in q.all()]
 
 
-@router.post("", status_code=201)
-def create_employee(body: EmployeeInput, db: Session = Depends(get_db)):
-    e = models.Employee(**body.model_dump())
-    db.add(e)
-    db.commit()
-    db.refresh(e)
-    return emp_to_dict(e)
-
-
 @router.get("/stats")
-def get_employee_stats(db: Session = Depends(get_db)):
+def get_employee_stats(db: Session = Depends(get_db), _=Depends(get_current_user)):
     total = db.query(models.Employee).count()
     active = db.query(models.Employee).filter(models.Employee.status == "active").count()
     on_leave = db.query(models.Employee).filter(models.Employee.status == "on_leave").count()
@@ -75,15 +76,35 @@ def get_employee_stats(db: Session = Depends(get_db)):
 
 
 @router.get("/{id}")
-def get_employee(id: int, db: Session = Depends(get_db)):
+def get_employee(id: int, db: Session = Depends(get_db), _=Depends(get_current_user)):
     e = db.query(models.Employee).filter(models.Employee.id == id).first()
     if not e:
         raise HTTPException(status_code=404, detail="Employee not found")
     return emp_to_dict(e)
 
 
+# ── Write endpoints — require manage_employees permission ──
+
+@router.post("", status_code=201)
+def create_employee(
+    body: EmployeeInput,
+    db: Session = Depends(get_db),
+    _=Depends(require_permission("manage_employees")),
+):
+    e = models.Employee(**body.model_dump())
+    db.add(e)
+    db.commit()
+    db.refresh(e)
+    return emp_to_dict(e)
+
+
 @router.patch("/{id}")
-def update_employee(id: int, body: EmployeeUpdate, db: Session = Depends(get_db)):
+def update_employee(
+    id: int,
+    body: EmployeeUpdate,
+    db: Session = Depends(get_db),
+    _=Depends(require_permission("manage_employees")),
+):
     e = db.query(models.Employee).filter(models.Employee.id == id).first()
     if not e:
         raise HTTPException(status_code=404, detail="Not found")
@@ -95,7 +116,11 @@ def update_employee(id: int, body: EmployeeUpdate, db: Session = Depends(get_db)
 
 
 @router.delete("/{id}", status_code=204)
-def delete_employee(id: int, db: Session = Depends(get_db)):
+def delete_employee(
+    id: int,
+    db: Session = Depends(get_db),
+    _=Depends(require_permission("manage_employees")),
+):
     e = db.query(models.Employee).filter(models.Employee.id == id).first()
     if not e:
         raise HTTPException(status_code=404, detail="Not found")

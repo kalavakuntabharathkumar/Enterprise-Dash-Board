@@ -5,6 +5,7 @@ from typing import Optional
 from pydantic import BaseModel
 from app.database import get_db
 from app import models
+from app.core.rbac import require_permission
 import random, string
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
@@ -32,7 +33,7 @@ class InvoiceUpdate(BaseModel):
 
 
 @router.get("/finance-summary")
-def get_finance_summary(db: Session = Depends(get_db)):
+def get_finance_summary(db: Session = Depends(get_db), _=Depends(require_permission("view_finance"))):
     total_revenue = db.query(func.sum(models.Invoice.amount)).filter(models.Invoice.status == "paid").scalar() or 0
     total_expenses = db.query(func.sum(models.Expense.amount)).scalar() or 0
     pending = db.query(func.sum(models.Invoice.amount)).filter(models.Invoice.status.in_(["draft", "sent"])).scalar() or 0
@@ -42,7 +43,11 @@ def get_finance_summary(db: Session = Depends(get_db)):
 
 
 @router.get("")
-def list_invoices(status: Optional[str] = None, db: Session = Depends(get_db)):
+def list_invoices(
+    status: Optional[str] = None,
+    db: Session = Depends(get_db),
+    _=Depends(require_permission("view_finance")),
+):
     q = db.query(models.Invoice)
     if status:
         q = q.filter(models.Invoice.status == status)
@@ -50,7 +55,11 @@ def list_invoices(status: Optional[str] = None, db: Session = Depends(get_db)):
 
 
 @router.post("", status_code=201)
-def create_invoice(body: InvoiceInput, db: Session = Depends(get_db)):
+def create_invoice(
+    body: InvoiceInput,
+    db: Session = Depends(get_db),
+    _=Depends(require_permission("view_finance")),
+):
     num = "INV-" + "".join(random.choices(string.digits, k=6))
     i = models.Invoice(invoice_number=num, **body.model_dump())
     db.add(i)
@@ -60,7 +69,12 @@ def create_invoice(body: InvoiceInput, db: Session = Depends(get_db)):
 
 
 @router.patch("/{id}")
-def update_invoice(id: int, body: InvoiceUpdate, db: Session = Depends(get_db)):
+def update_invoice(
+    id: int,
+    body: InvoiceUpdate,
+    db: Session = Depends(get_db),
+    _=Depends(require_permission("view_finance")),
+):
     i = db.query(models.Invoice).filter(models.Invoice.id == id).first()
     if not i:
         raise HTTPException(status_code=404, detail="Not found")
@@ -72,7 +86,11 @@ def update_invoice(id: int, body: InvoiceUpdate, db: Session = Depends(get_db)):
 
 
 @router.delete("/{id}", status_code=204)
-def delete_invoice(id: int, db: Session = Depends(get_db)):
+def delete_invoice(
+    id: int,
+    db: Session = Depends(get_db),
+    _=Depends(require_permission("view_finance")),
+):
     i = db.query(models.Invoice).filter(models.Invoice.id == id).first()
     if not i:
         raise HTTPException(status_code=404, detail="Not found")

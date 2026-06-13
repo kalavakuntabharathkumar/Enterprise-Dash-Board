@@ -4,6 +4,7 @@ from typing import Optional
 from pydantic import BaseModel
 from app.database import get_db
 from app import models
+from app.core.rbac import require_permission
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -20,12 +21,20 @@ class UserUpdate(BaseModel):
 
 
 @router.get("")
-def list_users(db: Session = Depends(get_db)):
+def list_users(
+    db: Session = Depends(get_db),
+    _=Depends(require_permission("manage_settings")),
+):
     return [user_to_dict(u) for u in db.query(models.User).all()]
 
 
 @router.patch("/{id}")
-def update_user(id: int, body: UserUpdate, db: Session = Depends(get_db)):
+def update_user(
+    id: int,
+    body: UserUpdate,
+    db: Session = Depends(get_db),
+    _=Depends(require_permission("manage_settings")),
+):
     u = db.query(models.User).filter(models.User.id == id).first()
     if not u:
         raise HTTPException(status_code=404, detail="Not found")

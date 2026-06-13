@@ -3,12 +3,17 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.database import get_db
 from app import models
+from app.core.security import get_current_user
+from app.core.rbac import require_permission
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
 
 @router.get("/overview")
-def get_analytics_overview(db: Session = Depends(get_db)):
+def get_analytics_overview(
+    db: Session = Depends(get_db),
+    _=Depends(require_permission("view_analytics")),
+):
     total_employees = db.query(models.Employee).count()
     total_revenue = db.query(func.sum(models.Invoice.amount)).filter(models.Invoice.status == "paid").scalar() or 0
     active_projects = db.query(models.Project).filter(models.Project.status == "active").count()
@@ -27,7 +32,10 @@ def get_analytics_overview(db: Session = Depends(get_db)):
 
 
 @router.get("/department-stats")
-def get_department_stats(db: Session = Depends(get_db)):
+def get_department_stats(
+    db: Session = Depends(get_db),
+    _=Depends(require_permission("view_analytics")),
+):
     depts = db.query(models.Department).all()
     result = []
     for d in depts:
@@ -36,7 +44,9 @@ def get_department_stats(db: Session = Depends(get_db)):
     return result
 
 
+# revenue-trend is also used by the Dashboard page (accessible to all authenticated users)
+# so it only requires a valid login, not view_analytics permission
 @router.get("/revenue-trend")
-def get_revenue_trend(db: Session = Depends(get_db)):
+def get_revenue_trend(db: Session = Depends(get_db), _=Depends(get_current_user)):
     months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     return [{"month": m, "revenue": round(95000 + i * 13000, 2), "expenses": round(60000 + i * 6500, 2)} for i, m in enumerate(months)]
