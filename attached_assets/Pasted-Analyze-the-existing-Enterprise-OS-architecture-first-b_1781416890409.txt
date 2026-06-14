@@ -1,0 +1,184 @@
+Analyze the existing Enterprise OS architecture first before making changes.
+
+IMPORTANT:
+Do NOT rewrite the application.
+Do NOT regenerate unrelated files.
+Do NOT modify backend business logic.
+Do NOT modify RBAC/workflow/analytics systems.
+Do NOT redesign the frontend.
+
+Current system state:
+
+* Enterprise OS platform is stable
+* RBAC implemented
+* Scoped access implemented
+* Analytics implemented
+* Workflows implemented
+* Notifications implemented
+* GitHub repository already pushed
+* Replit environment active
+
+GOAL:
+Perform final repository polishing and professionalization for showcase/demo readiness.
+
+TASKS
+
+1. Create secure environment example file.
+
+Create:
+backend/.env.example
+
+Requirements:
+
+* Include only placeholder values
+* Do NOT expose real secrets
+* Do NOT modify actual .env
+* Keep Replit compatibility
+
+Add:
+
+SECRET_KEY=your-secret-key-here
+FRONTEND_URL=http://localhost:5173
+OPENROUTER_API_KEY=your-openrouter-key
+GEMINI_API_KEY=your-gemini-key
+
+2. Analyze existing README.md first.
+
+If README already exists:
+
+* improve it safely
+* preserve useful existing sections
+* avoid deleting valid documentation
+
+If README is weak/minimal:
+
+* rebuild it professionally
+
+3. Create a professional enterprise project README.
+
+README must include:
+
+# Project Overview
+
+Explain Enterprise OS clearly.
+
+# Core Modules
+
+* HRMS
+* CRM
+* ERP
+* Finance
+* Workflow Automation
+* Analytics
+* Document Management
+* Notifications
+* Activity Tracking
+* RBAC
+
+# Tech Stack
+
+Frontend:
+
+* React
+* TypeScript
+* Tailwind
+* Shadcn UI
+
+Backend:
+
+* FastAPI
+* SQLAlchemy
+* SQLite
+
+# Security Features
+
+* JWT auth
+* RBAC
+* Scoped access control
+* Department isolation
+* Permission middleware
+
+# Features
+
+* Personalized dashboards
+* Workflow approvals
+* Scoped analytics
+* CSV exports
+* Document visibility controls
+* Notifications
+* Activity feeds
+
+# Setup Instructions
+
+Backend setup
+Frontend setup
+
+# Environment Variables
+
+Explain .env usage safely.
+
+# Demo Credentials
+
+Include current seeded users and passwords.
+
+# Architecture Highlights
+
+Explain:
+
+* modular backend
+* reusable widget system
+* scoped APIs
+* analytics architecture
+* SQLite compatibility
+* Replit compatibility
+
+# Project Status
+
+Mention:
+Prototype / Enterprise Architecture Demonstration Project
+
+4. Keep README professional.
+
+GOOD:
+
+* concise
+* enterprise-oriented
+* technically clear
+* architecture-focused
+
+BAD:
+
+* AI-generated sounding paragraphs
+* giant marketing language
+* unnecessary buzzwords
+
+5. Preserve repository stability.
+
+Do NOT:
+
+* modify backend APIs
+* change frontend routes
+* touch database schema
+* regenerate package files
+* change workflows
+
+6. Final verification.
+
+Verify:
+
+* README renders correctly
+* markdown formatting is clean
+* code blocks render correctly
+* .env.example exists
+* no secrets exposed
+* existing application remains untouched
+
+Before modifying files:
+First analyze:
+
+* current README quality
+* existing setup instructions
+* current seeded demo users
+* safest documentation-only update path
+
+Then implement safely and minimally.
