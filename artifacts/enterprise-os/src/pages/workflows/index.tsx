@@ -53,6 +53,13 @@ interface WorkflowCardProps {
   onDuplicate: () => void;
 }
 
+function formatDuration(ms: number | null | undefined): string {
+  if (!ms) return "—";
+  if (ms < 1000) return `${ms}ms`;
+  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+  return `${(ms / 60000).toFixed(1)}m`;
+}
+
 function WorkflowCard({ workflow, onTrigger, isTriggering, onEdit, onDelete, onDuplicate }: WorkflowCardProps) {
   const status = STATUS_CONFIG[workflow.status] || STATUS_CONFIG.inactive;
   const StatusIcon = status.icon;
@@ -60,7 +67,9 @@ function WorkflowCard({ workflow, onTrigger, isTriggering, onEdit, onDelete, onD
   const TriggerIcon = TRIGGER_ICONS[triggerKey] || Zap;
   const triggerColorClass = TRIGGER_COLORS[triggerKey] || TRIGGER_COLORS.manual;
 
-  const successRate = (workflow.runs ?? 0) > 0 ? Math.round(80 + ((workflow.id ?? 0) % 18)) : 0;
+  const totalRuns = workflow.total_runs ?? workflow.runs ?? 0;
+  const successRate = workflow.success_rate ?? 0;
+  const avgDuration = workflow.avg_duration_ms ?? null;
 
   return (
     <div className="group bg-white dark:bg-white/3 border border-gray-100 dark:border-white/8 rounded-2xl overflow-hidden hover:border-gray-200 dark:hover:border-white/15 hover:shadow-md dark:hover:shadow-black/20 transition-all duration-200">
@@ -129,35 +138,50 @@ function WorkflowCard({ workflow, onTrigger, isTriggering, onEdit, onDelete, onD
         {/* Stats */}
         <div className="grid grid-cols-3 gap-2 mb-4 p-3 bg-gray-50 dark:bg-white/3 rounded-xl border border-gray-100 dark:border-white/5">
           <div className="text-center">
-            <p className="text-sm font-bold text-gray-900 dark:text-white">{workflow.runs ?? 0}</p>
+            <p className="text-sm font-bold text-gray-900 dark:text-white">{totalRuns}</p>
             <p className="text-[10px] text-gray-500 dark:text-gray-500 mt-0.5">Runs</p>
           </div>
           <div className="text-center border-x border-gray-100 dark:border-white/5">
             <p className="text-sm font-bold text-gray-900 dark:text-white">
-              {(workflow.runs ?? 0) > 0 ? `${successRate}%` : "—"}
+              {totalRuns > 0 ? `${successRate}%` : "—"}
             </p>
             <p className="text-[10px] text-gray-500 dark:text-gray-500 mt-0.5">Success</p>
           </div>
           <div className="text-center">
             <p className="text-sm font-bold text-gray-900 dark:text-white">
-              {workflow.last_run
-                ? new Date(workflow.last_run).toLocaleDateString("en", { month: "short", day: "numeric" })
-                : "Never"}
+              {formatDuration(avgDuration)}
             </p>
-            <p className="text-[10px] text-gray-500 dark:text-gray-500 mt-0.5">Last run</p>
+            <p className="text-[10px] text-gray-500 dark:text-gray-500 mt-0.5">Avg duration</p>
           </div>
         </div>
 
-        {/* Success bar */}
-        {(workflow.runs ?? 0) > 0 && (
+        {/* Success bar — driven by real success_rate */}
+        {totalRuns > 0 && (
           <div className="mb-4">
             <div className="flex justify-between text-[10px] text-gray-400 mb-1">
-              <span>Success rate</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-medium">{successRate}%</span>
+              <span>
+                Success rate
+                {(workflow.failed_runs ?? 0) > 0 && (
+                  <span className="ml-1.5 text-red-400">{workflow.failed_runs} failed</span>
+                )}
+              </span>
+              <span className={cn(
+                "font-medium",
+                successRate >= 95 ? "text-emerald-600 dark:text-emerald-400" :
+                successRate >= 80 ? "text-amber-600 dark:text-amber-400" :
+                "text-red-500 dark:text-red-400"
+              )}>
+                {successRate}%
+              </span>
             </div>
             <div className="h-1 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full transition-all"
+                className={cn(
+                  "h-full rounded-full transition-all",
+                  successRate >= 95 ? "bg-gradient-to-r from-emerald-400 to-teal-400" :
+                  successRate >= 80 ? "bg-gradient-to-r from-amber-400 to-orange-400" :
+                  "bg-gradient-to-r from-red-400 to-rose-400"
+                )}
                 style={{ width: `${successRate}%` }}
               />
             </div>

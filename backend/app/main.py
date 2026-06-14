@@ -549,6 +549,65 @@ def startup():
                     db.add(models.RolePermission(role_id=role_id, permission_id=perm_id))
         db.flush()
 
+        # ── WorkflowRun: Deterministic execution history ─────────────────
+        if db.query(models.WorkflowRun).count() == 0:
+            import datetime as dt
+
+            now = dt.datetime.utcnow()
+            FAILURE_MSGS = [
+                "Timeout: downstream service unavailable",
+                "Connection refused: SMTP relay error",
+                "Rate limit exceeded: retry after 60s",
+                "Target user not found in directory",
+            ]
+
+            # (workflow_name, total_runs, success_count, avg_duration_ms, span_days)
+            WF_RUN_CONFIGS = [
+                ("New Employee Onboarding",    48,  45,  1850, 90),
+                ("Invoice Payment Reminder",  124, 120,   420, 90),
+                ("Lead Qualification Scoring", 89,  81,   680, 90),
+                ("Weekly Performance Report",  36,  36,  2400, 84),
+                ("Low Stock Alert",            12,  10,   310, 60),
+            ]
+
+            # Duration deltas per run index (cycles every 7) — deterministic variation
+            DUR_DELTAS = [-180, -90, 0, 120, -60, 200, -130]
+
+            for wf_name, total, success_count, avg_dur, span in WF_RUN_CONFIGS:
+                wf = db.query(models.Workflow).filter(models.Workflow.name == wf_name).first()
+                if not wf:
+                    continue
+
+                failed_count = total - success_count
+                # Mark evenly spaced indices as failed across the run history
+                fail_step = max(1, total // (failed_count + 1)) if failed_count > 0 else 0
+                fail_indices = {fail_step * (k + 1) for k in range(failed_count)} if fail_step else set()
+
+                for i in range(total):
+                    days_ago = span - (i * span / total)
+                    started = now - dt.timedelta(days=days_ago, hours=(i % 12), minutes=(i * 7 % 60))
+                    is_failed = i in fail_indices
+
+                    dur = max(80, avg_dur + DUR_DELTAS[i % 7])
+                    completed = started + dt.timedelta(milliseconds=dur) if not is_failed else None
+                    error = FAILURE_MSGS[i % len(FAILURE_MSGS)] if is_failed else None
+
+                    db.add(models.WorkflowRun(
+                        workflow_id=wf.id,
+                        status="failed" if is_failed else "completed",
+                        started_at=started,
+                        completed_at=completed,
+                        duration_ms=dur if not is_failed else None,
+                        error_message=error,
+                    ))
+
+                # Sync the legacy counter and last_run on the Workflow row
+                wf.runs = total
+                if total > 0:
+                    wf.last_run = str(now - dt.timedelta(days=(span / total), minutes=7))
+
+            db.flush()
+
         db.commit()
     except Exception as e:
         db.rollback()

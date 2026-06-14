@@ -249,6 +249,7 @@ class Workflow(Base):
     last_run = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     steps = relationship("WorkflowStep", back_populates="workflow", cascade="all, delete-orphan", order_by="WorkflowStep.step_order")
+    run_records = relationship("WorkflowRun", back_populates="workflow", cascade="all, delete-orphan")
 
 
 class WorkflowStep(Base):
@@ -260,6 +261,18 @@ class WorkflowStep(Base):
     target = Column(String, nullable=False)
     delay_minutes = Column(Integer, default=0)
     workflow = relationship("Workflow", back_populates="steps")
+
+
+class WorkflowRun(Base):
+    __tablename__ = "workflow_runs"
+    id = Column(Integer, primary_key=True, index=True)
+    workflow_id = Column(Integer, ForeignKey("workflows.id"), nullable=False)
+    status = Column(String, nullable=False, default="completed")  # running | completed | failed
+    started_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)
+    duration_ms = Column(Integer, nullable=True)
+    error_message = Column(Text, nullable=True)
+    workflow = relationship("Workflow", back_populates="run_records")
 
 
 # ── NEW MODELS ────────────────────────────────────────────────────────────────

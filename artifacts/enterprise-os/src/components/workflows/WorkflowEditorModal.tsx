@@ -34,6 +34,14 @@ export interface WorkflowData {
   trigger: string;
   status: string;
   steps: WorkflowStepData[];
+  // Real computed metrics from WorkflowRun records
+  runs?: number;
+  last_run?: string | null;
+  total_runs?: number;
+  successful_runs?: number;
+  failed_runs?: number;
+  avg_duration_ms?: number | null;
+  success_rate?: number;
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────────
