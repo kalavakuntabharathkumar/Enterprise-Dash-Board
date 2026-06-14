@@ -130,8 +130,12 @@ See `backend/.env.example` for a copy-paste template.
 
 | Role | Email | Password | Access |
 |---|---|---|---|
-| Admin | `admin@enterpriseos.com` | `admin123` | Full access to all 10 modules |
-| Employee | `employee@enterpriseos.com` | `employee123` | Dashboard, Projects, Leave, AI Copilot, Notifications, Settings |
+| Admin | `admin@enterpriseos.com` | `admin123` | Full access — all 10 modules, CSV export, user management |
+| HR Manager | `hr@enterpriseos.com` | `hr1234` | Org-wide employee & leave data |
+| Finance Manager | `finance@enterpriseos.com` | `finance123` | Own employee record only |
+| Dept Head (Engineering) | `sarah.chen@co.com` | `dept1234` | Engineering dept employees & leaves |
+| Dept Head (Sales) | `marcus.j@co.com` | `dept1234` | Sales dept employees & leaves |
+| Employee | `employee@enterpriseos.com` | `employee123` | Own records, Projects, AI Copilot, Notifications, Settings |
 
 ---
 
