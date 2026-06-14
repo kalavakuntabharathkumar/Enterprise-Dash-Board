@@ -1,11 +1,23 @@
-from fastapi import APIRouter, Depends, HTTPException
+"""
+AI Copilot route — upgraded to inject real scoped enterprise context into every
+LLM call.  The OpenRouter → Gemini → fallback chain is preserved exactly.
+The fallback now uses live DB data instead of hardcoded fake metrics.
+"""
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import Optional, List
 from pydantic import BaseModel
 import httpx
-import os
+
 from app.database import get_db
 from app.core.config import OPENROUTER_API_KEY, GEMINI_API_KEY
+from app.core.security import get_current_user
+from app.ai.context_builder import build_context
+from app.ai.prompt_builder import (
+    build_system_prompt,
+    build_fallback_response,
+    build_context_aware_suggestions,
+)
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
@@ -21,30 +33,24 @@ class AiChatInput(BaseModel):
     history: List[ChatMessage] = []
 
 
-SYSTEM_PROMPT = """You are an AI assistant integrated into Enterprise OS — a unified enterprise operating system. 
-You help users with HR management, CRM, ERP, finance, projects, analytics, and business operations.
-Be concise, professional, and data-driven. Provide actionable insights."""
+# ── LLM callers (unchanged — preserved exactly) ───────────────────────────────
 
-MODULE_CONTEXTS = {
-    "hrms": "Focus on HR metrics, employee performance, attendance, and workforce planning.",
-    "crm": "Focus on sales pipeline, lead conversion, deal tracking, and customer relationships.",
-    "erp": "Focus on inventory management, vendor relations, and supply chain optimization.",
-    "finance": "Focus on revenue trends, expense management, invoice tracking, and budget analysis.",
-    "projects": "Focus on project progress, task management, deadlines, and team productivity.",
-    "analytics": "Focus on KPIs, business performance metrics, and strategic insights.",
-    "general": "Provide general business insights and enterprise operations support.",
-}
-
-
-async def call_openrouter(messages: list) -> str:
+async def call_openrouter(messages: list) -> Optional[str]:
     if not OPENROUTER_API_KEY:
         return None
     try:
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(
                 "https://openrouter.ai/api/v1/chat/completions",
-                headers={"Authorization": f"Bearer {OPENROUTER_API_KEY}", "Content-Type": "application/json"},
-                json={"model": "deepseek/deepseek-chat", "messages": messages, "max_tokens": 800},
+                headers={
+                    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": "deepseek/deepseek-chat",
+                    "messages": messages,
+                    "max_tokens": 800,
+                },
             )
             if resp.status_code == 200:
                 return resp.json()["choices"][0]["message"]["content"]
@@ -53,14 +59,15 @@ async def call_openrouter(messages: list) -> str:
     return None
 
 
-async def call_gemini(message: str) -> str:
+async def call_gemini(prompt: str) -> Optional[str]:
     if not GEMINI_API_KEY:
         return None
     try:
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(
-                f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}",
-                json={"contents": [{"parts": [{"text": message}]}]},
+                f"https://generativelanguage.googleapis.com/v1beta/models/"
+                f"gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}",
+                json={"contents": [{"parts": [{"text": prompt}]}]},
             )
             if resp.status_code == 200:
                 return resp.json()["candidates"][0]["content"]["parts"][0]["text"]
@@ -69,74 +76,89 @@ async def call_gemini(message: str) -> str:
     return None
 
 
-def get_fallback_response(message: str, module: str) -> str:
-    msg_lower = message.lower()
-    if any(w in msg_lower for w in ["revenue", "sales", "profit"]):
-        return "Based on current data, revenue is trending upward with a 12.5% growth month-over-month. The top performing segments are Enterprise and SMB. Consider focusing on high-value deals in the proposal stage to accelerate Q4 targets."
-    elif any(w in msg_lower for w in ["employee", "hr", "staff", "team"]):
-        return "Current workforce analysis shows 87% of employees are active with an 8.2% growth rate this quarter. Attendance rates remain high at 94%. Consider reviewing the 3 pending leave requests and scheduling performance reviews for the engineering department."
-    elif any(w in msg_lower for w in ["project", "task", "deadline"]):
-        return "Project portfolio overview: 4 active projects with average completion at 65%. The Platform Redesign project is at risk with only 45% completion approaching deadline. I recommend reallocating resources from the Mobile App project to ensure timely delivery."
-    elif any(w in msg_lower for w in ["inventory", "stock", "product"]):
-        return "Inventory analysis indicates 3 products are critically low on stock (below 10 units). Total inventory value stands at $485,000. Recommend initiating purchase orders for low-stock items and reviewing vendor contracts for better pricing."
-    elif any(w in msg_lower for w in ["invoice", "expense", "finance", "budget"]):
-        return "Financial snapshot: $2.4M revenue (paid invoices), $1.1M total expenses, net profit margin at 54%. There are 8 pending invoices worth $340K. 2 invoices are overdue — recommend immediate follow-up with the respective clients."
-    elif any(w in msg_lower for w in ["lead", "deal", "crm", "pipeline"]):
-        return "CRM pipeline summary: 24 active leads with $1.2M total pipeline value. 6 deals in negotiation stage (highest probability). Lead conversion rate is at 31%. Recommend prioritizing the 4 leads in proposal stage for outreach this week."
-    else:
-        return f"Enterprise OS AI Copilot is ready to help with {module} insights. I can analyze your HR data, sales pipeline, financial metrics, project status, and inventory levels. What specific metrics or insights would you like to explore?"
-
+# ── Chat endpoint ─────────────────────────────────────────────────────────────
 
 @router.post("/chat")
-async def ai_chat(body: AiChatInput):
-    module_ctx = MODULE_CONTEXTS.get(body.module, MODULE_CONTEXTS["general"])
-    system = f"{SYSTEM_PROMPT}\n\nCurrent module context: {module_ctx}"
-    messages = [{"role": "system", "content": system}]
+async def ai_chat(
+    body: AiChatInput,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """
+    AI Copilot chat.  Flow:
+      1. Build scoped enterprise context from live DB (reuses analytics services)
+      2. Inject context into LLM system prompt
+      3. Try OpenRouter (DeepSeek) → Gemini → data-driven fallback
+      4. Return {response, module, suggestions} — shape unchanged
+    """
+    # ── 1. Gather real scoped context ─────────────────────────────────────────
+    ctx = build_context(current_user, db, module=body.module)
+
+    # ── 2. Build context-enriched system prompt ────────────────────────────────
+    system_prompt = build_system_prompt(ctx)
+
+    # ── 3. Try OpenRouter (DeepSeek) ──────────────────────────────────────────
+    messages = [{"role": "system", "content": system_prompt}]
     for h in body.history[-6:]:
         messages.append({"role": h.role, "content": h.content})
     messages.append({"role": "user", "content": body.message})
 
     response = await call_openrouter(messages)
-    if not response:
-        response = await call_gemini(f"{system}\n\nUser: {body.message}")
-    if not response:
-        response = get_fallback_response(body.message, body.module)
 
-    suggestions = [
-        "Summarize this week's performance",
-        "What are the key risks?",
-        "Generate a status report",
-    ]
+    # ── 4. Try Gemini ──────────────────────────────────────────────────────────
+    if not response:
+        gemini_prompt = f"{system_prompt}\n\nUser: {body.message}"
+        response = await call_gemini(gemini_prompt)
+
+    # ── 5. Data-driven fallback (real DB data, no fake numbers) ───────────────
+    if not response:
+        response = build_fallback_response(ctx, body.message)
+
+    # ── 6. Context-aware follow-up suggestions ────────────────────────────────
+    suggestions = build_context_aware_suggestions(ctx, body.module)
+
     return {"response": response, "module": body.module, "suggestions": suggestions}
 
+
+# ── Suggestions endpoint (unchanged) ─────────────────────────────────────────
 
 @router.get("/suggestions")
 def get_ai_suggestions(module: Optional[str] = None):
     suggestions_map = {
         "hrms": [
             {"id": 1, "prompt": "Analyze employee attendance trends for this month", "category": "HR Analytics"},
-            {"id": 2, "prompt": "Which departments have the highest turnover risk?", "category": "Workforce"},
-            {"id": 3, "prompt": "Generate a performance review summary", "category": "Performance"},
+            {"id": 2, "prompt": "Which departments have the highest leave activity?", "category": "Workforce"},
+            {"id": 3, "prompt": "How many leave approvals are currently pending?", "category": "Approvals"},
         ],
         "crm": [
             {"id": 4, "prompt": "Summarize the current sales pipeline", "category": "Sales"},
-            {"id": 5, "prompt": "Which leads are most likely to convert this week?", "category": "Lead Analysis"},
-            {"id": 6, "prompt": "Analyze deal win/loss patterns", "category": "Deal Insights"},
+            {"id": 5, "prompt": "What is our current lead conversion rate?", "category": "Lead Analysis"},
+            {"id": 6, "prompt": "Show open leads and pipeline value", "category": "Deal Insights"},
         ],
         "finance": [
-            {"id": 7, "prompt": "Generate a monthly revenue summary", "category": "Revenue"},
-            {"id": 8, "prompt": "Identify top expense categories this quarter", "category": "Expenses"},
-            {"id": 9, "prompt": "Which invoices are at risk of becoming overdue?", "category": "Invoices"},
+            {"id": 7, "prompt": "Show revenue and outstanding invoice summary", "category": "Revenue"},
+            {"id": 8, "prompt": "What are the top expense categories?", "category": "Expenses"},
+            {"id": 9, "prompt": "How many invoices are overdue or outstanding?", "category": "Invoices"},
         ],
         "projects": [
-            {"id": 10, "prompt": "Which projects are behind schedule?", "category": "Project Health"},
+            {"id": 10, "prompt": "Which projects are active and what is their progress?", "category": "Project Health"},
             {"id": 11, "prompt": "Summarize team task completion rates", "category": "Team Performance"},
-            {"id": 12, "prompt": "Identify bottlenecks in the current sprint", "category": "Productivity"},
+            {"id": 12, "prompt": "What is the average project completion percentage?", "category": "Progress"},
+        ],
+        "erp": [
+            {"id": 13, "prompt": "Show inventory status and low-stock items", "category": "Inventory"},
+            {"id": 14, "prompt": "Which products are critically low on stock?", "category": "Stock Alerts"},
+            {"id": 15, "prompt": "Summarize product and vendor status", "category": "Supply Chain"},
+        ],
+        "analytics": [
+            {"id": 16, "prompt": "Give me an executive summary of operations", "category": "Overview"},
+            {"id": 17, "prompt": "Which department has the most activity?", "category": "Department Insights"},
+            {"id": 18, "prompt": "Show key financial and workforce KPIs", "category": "KPIs"},
         ],
     }
     default = [
-        {"id": 13, "prompt": "Give me an executive summary of today's business metrics", "category": "Overview"},
-        {"id": 14, "prompt": "What are the top 3 priorities I should focus on?", "category": "Strategy"},
-        {"id": 15, "prompt": "Analyze overall business performance this month", "category": "Analytics"},
+        {"id": 19, "prompt": "Summarize company operations across all modules", "category": "Overview"},
+        {"id": 20, "prompt": "How many pending approvals and unread notifications do I have?", "category": "My Summary"},
+        {"id": 21, "prompt": "Show the latest activity and key metrics", "category": "Operations"},
     ]
     return suggestions_map.get(module or "", default)

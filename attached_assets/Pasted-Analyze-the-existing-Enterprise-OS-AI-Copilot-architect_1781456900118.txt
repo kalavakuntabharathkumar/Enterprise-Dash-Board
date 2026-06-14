@@ -1,0 +1,226 @@
+Analyze the existing Enterprise OS AI Copilot architecture before making changes.
+
+IMPORTANT:
+Do NOT rewrite the application.
+Do NOT redesign the frontend.
+Do NOT replace authentication.
+Do NOT modify RBAC/scoping/workflow systems.
+Do NOT regenerate unrelated files.
+Do NOT break analytics or dashboards.
+Do NOT remove current OpenRouter/Gemini integration.
+
+Current platform state:
+
+* RBAC is complete
+* Scoped access control is complete
+* Analytics now uses real database data
+* Workflows and activity feeds exist
+* Notifications exist
+* Document management exists
+* Personalized dashboards exist
+* FastAPI backend is stable
+* React + TypeScript frontend is stable
+
+GOAL:
+Upgrade the AI Copilot from static/fallback responses into a real enterprise operational assistant using LIVE scoped database data.
+
+IMPORTANT:
+The AI Copilot must NEVER return fake hardcoded business metrics anymore.
+
+REQUIRED TASKS
+
+1. Analyze existing AI architecture first.
+
+Review:
+
+* ai.py
+* OpenRouter integration
+* Gemini integration
+* fallback response logic
+* analytics services
+* scoping utilities
+* RBAC utilities
+
+Before modifying files:
+Explain:
+
+* where fake responses exist
+* where canned metrics exist
+* safest insertion points for real enterprise context
+* how to preserve current AI architecture safely
+
+2. Remove fake fallback business responses.
+
+Current bad behavior:
+
+* fake revenue values
+* fake growth percentages
+* fake operational summaries
+* keyword-only canned responses
+
+Replace with:
+
+* real database-driven summaries
+* scoped operational metrics
+* safe dynamic responses
+
+Fallbacks should become:
+
+* intelligent operational summaries
+* not fabricated analytics
+
+3. Create centralized AI context service.
+
+Create:
+backend/app/ai/context_builder.py
+
+Responsibilities:
+
+* gather scoped analytics
+* gather workflow summaries
+* gather activity summaries
+* gather notification summaries
+* gather document summaries
+* build enterprise context payloads
+
+IMPORTANT:
+Reuse existing analytics services.
+Do NOT duplicate business logic.
+
+4. Add scoped enterprise AI summaries.
+
+AI should answer questions like:
+
+* "How many pending leaves exist?"
+* "Show finance summary"
+* "Which department has most activity?"
+* "Show unread notifications"
+* "How many HR approvals are pending?"
+* "What documents were uploaded recently?"
+* "Summarize company operations"
+
+Responses MUST use:
+
+* real SQLite data
+* scoped RBAC filtering
+* existing analytics services
+* existing scoping utilities
+
+5. Preserve scoped access security.
+
+CRITICAL:
+
+Employee:
+
+* only own data
+
+Department Head:
+
+* only department data
+
+HR:
+
+* HR scoped data
+
+Finance:
+
+* finance scoped data
+
+Admin:
+
+* full organization data
+
+AI MUST NEVER leak unauthorized data.
+
+Reuse:
+
+* get_effective_scope()
+* scope_leave_query()
+* scope_employee_query()
+* existing permission utilities
+
+6. Improve AI orchestration safely.
+
+Keep current flow:
+
+OpenRouter → Gemini → fallback
+
+BUT:
+
+fallback must use real DB summaries.
+
+If APIs fail:
+AI still returns useful enterprise operational data.
+
+7. Add reusable enterprise prompt builder.
+
+Create:
+backend/app/ai/prompt_builder.py
+
+Responsibilities:
+
+* build system prompts
+* inject scoped enterprise context
+* inject operational summaries
+* inject role-aware context
+
+Keep prompts modular.
+
+8. Improve Copilot operational intelligence.
+
+AI should support:
+
+* analytics summaries
+* workflow summaries
+* operational KPIs
+* department summaries
+* leave approval summaries
+* activity summaries
+* document summaries
+
+WITHOUT:
+
+* fake hallucinated numbers
+* fabricated business claims
+
+9. Keep architecture lightweight.
+
+Do NOT:
+
+* add vector databases
+* add LangChain
+* add heavy RAG systems
+* add realtime streaming
+* rebuild chat UI
+
+Reuse existing backend services.
+
+10. Preserve frontend stability.
+
+Do NOT redesign the copilot UI.
+
+Only improve:
+
+* response quality
+* operational intelligence
+* data accuracy
+
+11. Maintain Replit compatibility.
+12. Maintain SQLite compatibility.
+
+FINAL VERIFICATION REQUIREMENTS
+
+Verify:
+
+* no fake KPI responses remain
+* AI responses use real DB data
+* RBAC scoping is respected
+* fallback responses are intelligent
+* OpenRouter/Gemini flow still works
+* no analytics regressions
+* no workflow regressions
+* no frontend regressions
+* no security leaks occur
+
+Goal outcome:
+Transform the AI Copilot from a static demo chatbot into a real enterprise operational assistant powered by the platform’s live scoped data.
