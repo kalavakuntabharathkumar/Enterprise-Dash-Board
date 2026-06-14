@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, ArrowRight, CheckCircle2, Command } from "lucide-react";
+import { Eye, EyeOff, ArrowRight, CheckCircle2 } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -69,9 +69,9 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="relative z-10">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-600/40">
-              <Command className="w-4 h-4 text-white" strokeWidth={2.5} />
-            </div>
+            <div className="w-9 h-9 rounded-xl flex-shrink-0 overflow-hidden"
+              style={{ backgroundImage: 'url(/logo.png)', backgroundSize: '300%', backgroundPosition: 'center 8%' }}
+            />
             <div>
               <p className="text-white font-bold text-lg tracking-tight leading-none">Enterprise OS</p>
               <p className="text-white/30 text-[10px] tracking-widest uppercase mt-0.5">Unified Platform</p>
@@ -119,9 +119,9 @@ export default function LoginPage() {
         <div className="w-full max-w-[360px]">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-3 justify-center mb-10">
-            <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-xl flex items-center justify-center">
-              <Command className="w-4 h-4 text-white" strokeWidth={2.5} />
-            </div>
+            <div className="w-9 h-9 rounded-xl flex-shrink-0"
+              style={{ backgroundImage: 'url(/logo.png)', backgroundSize: '300%', backgroundPosition: 'center 8%' }}
+            />
             <span className="font-bold text-xl text-gray-900">Enterprise OS</span>
           </div>
 
