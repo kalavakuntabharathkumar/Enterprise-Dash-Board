@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { AddLeadModal } from "@/components/modals/AddLeadModal";
+import { KpiCard } from "@/components/dashboard/KpiCard";
 
 const STAGE_CONFIG: Record<string, { label: string; color: string; step: number; barColor: string; dot: string }> = {
   prospect:    { label: "Prospect",    color: "bg-gray-100 text-gray-600 dark:bg-white/8 dark:text-gray-400",                     step: 1, barColor: "bg-gray-300 dark:bg-white/20",  dot: "bg-gray-400" },
@@ -68,18 +69,9 @@ export default function LeadsPage() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {kpis.map((k, i) => { const Icon = k.icon; return (
-          <div key={i} className="bg-white dark:bg-white/3 border border-gray-100 dark:border-white/8 rounded-xl p-4">
-            <div className="flex items-center gap-2.5 mb-3">
-              <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0", k.color)}>
-                <Icon className={cn("w-4 h-4", k.iconColor)} />
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{k.label}</p>
-            </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{k.value}</p>
-            <p className="text-[11px] text-gray-400 mt-0.5">{k.sub}</p>
-          </div>
-        ); })}
+        {kpis.map((k, i) => (
+          <KpiCard key={i} title={k.label} value={k.value} icon={k.icon} iconClass={cn(k.color, k.iconColor)} sub={k.sub} />
+        ))}
       </div>
 
       {/* Pipeline funnel bar */}

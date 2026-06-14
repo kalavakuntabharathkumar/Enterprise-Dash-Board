@@ -141,5 +141,63 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  *:focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #cbd5e1;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.18);
+  }
+}
+
+@layer components {
+  .eos-page-header {
+    @apply flex items-center justify-between;
+  }
+
+  .eos-page-title {
+    @apply text-2xl font-bold tracking-tight text-gray-900 dark:text-white;
+  }
+
+  .eos-page-subtitle {
+    @apply text-gray-500 dark:text-gray-400 mt-1 text-sm;
+  }
+
+  .eos-table-th {
+    @apply px-5 py-3 text-left text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide;
+  }
+
+  .eos-table-td {
+    @apply px-5 py-3.5 text-sm text-gray-700 dark:text-gray-300;
+  }
+
+  .eos-table-row {
+    @apply border-b border-gray-50 dark:border-white/5 hover:bg-gray-50/60 dark:hover:bg-white/[0.02] transition-colors;
   }
 }

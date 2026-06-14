@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { AddEmployeeModal } from "@/components/modals/AddEmployeeModal";
+import { KpiCard } from "@/components/dashboard/KpiCard";
 
 const DEPT_COLORS: Record<string, string> = {
   Engineering:  "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400",
@@ -104,20 +105,9 @@ export default function EmployeesPage() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {kpis.map((k, i) => {
-          const Icon = k.icon;
-          return (
-            <div key={i} className="bg-white dark:bg-white/3 border border-gray-100 dark:border-white/8 rounded-xl p-4 flex items-center gap-3">
-              <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0", k.color)}>
-                <Icon className={cn("w-4.5 h-4.5", k.iconColor)} />
-              </div>
-              <div>
-                <p className="text-xl font-bold text-gray-900 dark:text-white">{k.value}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{k.label}</p>
-              </div>
-            </div>
-          );
-        })}
+        {kpis.map((k, i) => (
+          <KpiCard key={i} variant="inline" title={k.label} value={k.value} icon={k.icon} iconClass={cn(k.color, k.iconColor)} />
+        ))}
       </div>
 
       {/* Filters */}
@@ -154,7 +144,7 @@ export default function EmployeesPage() {
             const isActive = emp.status === "active";
             return (
               <Link key={emp.id} to={`/hrms/employees/${emp.id}`}
-                className="group bg-white dark:bg-white/3 border border-gray-100 dark:border-white/8 rounded-2xl overflow-hidden hover:border-indigo-200 dark:hover:border-indigo-500/30 hover:shadow-lg dark:hover:shadow-black/20 transition-all duration-200 hover:-translate-y-0.5">
+                className="group bg-white dark:bg-white/3 border border-gray-100 dark:border-white/8 rounded-2xl overflow-hidden hover:border-indigo-200 dark:hover:border-indigo-500/30 hover:shadow-md dark:hover:shadow-black/20 transition-all duration-200 hover:-translate-y-0.5">
                 {/* Top gradient bar with avatar inside */}
                 <div className={cn("h-16 bg-gradient-to-r", gradient, "relative flex items-end px-4 pb-0")}>
                   <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "radial-gradient(circle at 30% 50%, white 1px, transparent 1px)", backgroundSize: "20px 20px" }} />

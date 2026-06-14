@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { KpiCard } from "@/components/dashboard/KpiCard";
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; badge: string; dot: string }> = {
   present: { label: "Present", icon: CheckCircle2, badge: "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20", dot: "bg-emerald-400" },
@@ -72,20 +73,9 @@ export default function AttendancePage() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {kpis.map((k, i) => {
-          const Icon = k.icon;
-          return (
-            <div key={i} className="bg-white dark:bg-white/3 border border-gray-100 dark:border-white/8 rounded-xl p-4 flex items-center gap-3">
-              <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0", k.color)}>
-                <Icon className={cn("w-4.5 h-4.5", k.iconColor)} />
-              </div>
-              <div>
-                <p className="text-xl font-bold text-gray-900 dark:text-white">{k.value}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{k.label}</p>
-              </div>
-            </div>
-          );
-        })}
+        {kpis.map((k, i) => (
+          <KpiCard key={i} variant="inline" title={k.label} value={k.value} icon={k.icon} iconClass={cn(k.color, k.iconColor)} />
+        ))}
       </div>
 
       <div className="bg-white dark:bg-white/3 border border-gray-100 dark:border-white/8 rounded-xl overflow-hidden">

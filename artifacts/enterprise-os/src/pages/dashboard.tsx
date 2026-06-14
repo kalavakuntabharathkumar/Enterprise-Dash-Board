@@ -16,6 +16,7 @@ import {
   ResponsiveContainer, BarChart, Bar,
 } from "recharts";
 
+import { KpiCard } from "@/components/dashboard/KpiCard";
 import { fetchWithAuth } from "@/components/dashboard/widgets/fetchWithAuth";
 import { MyLeavesWidget }      from "@/components/dashboard/widgets/employee/MyLeavesWidget";
 import { PendingLeavesWidget } from "@/components/dashboard/widgets/hr/PendingLeavesWidget";
@@ -420,28 +421,7 @@ export default function Dashboard() {
       {/* ── KPI Cards ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         {kpis.map((m, i) => (
-          <Card key={i} className="border-gray-100 shadow-sm hover:shadow-md transition-shadow bg-white">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">{m.title}</p>
-                  <p className="text-2xl font-bold text-gray-900">{m.value}</p>
-                  <div className="flex items-center gap-1.5 mt-2">
-                    {m.up
-                      ? <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-                      : <TrendingDown className="w-3.5 h-3.5 text-red-500" />
-                    }
-                    <span className={`text-xs font-medium ${m.up ? "text-emerald-600" : "text-red-600"}`}>
-                      {m.trend}
-                    </span>
-                  </div>
-                </div>
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${m.color}`}>
-                  <m.icon className="w-5 h-5" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <KpiCard key={i} title={m.title} value={m.value} icon={m.icon} iconClass={m.color} trend={m.trend} trendUp={m.up} />
         ))}
       </div>
 

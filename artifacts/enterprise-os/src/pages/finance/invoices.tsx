@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { KpiCard } from "@/components/dashboard/KpiCard";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuTrigger
@@ -94,27 +95,9 @@ export default function InvoicesPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {kpis.map((kpi, i) => {
-          const Icon = kpi.icon;
-          return (
-            <div key={i} className="bg-white dark:bg-white/3 border border-gray-100 dark:border-white/8 rounded-xl p-4">
-              <div className="flex items-start justify-between mb-3">
-                <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center", kpi.color)}>
-                  <Icon className={cn("w-4.5 h-4.5", kpi.iconColor)} />
-                </div>
-                {kpi.trend && (
-                  <span className="flex items-center gap-0.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                    <TrendingUp className="w-3 h-3" />
-                    {kpi.trend}
-                  </span>
-                )}
-              </div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mb-0.5">{kpi.value}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{kpi.label}</p>
-              <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">{kpi.sub}</p>
-            </div>
-          );
-        })}
+        {kpis.map((kpi, i) => (
+          <KpiCard key={i} title={kpi.label} value={kpi.value} icon={kpi.icon} iconClass={cn(kpi.color, kpi.iconColor)} trend={kpi.trend ?? undefined} trendUp={true} sub={kpi.sub} />
+        ))}
       </div>
 
       {/* Table card */}
