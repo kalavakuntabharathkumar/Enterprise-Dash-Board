@@ -38,8 +38,8 @@ const statusColors: Record<string, string> = {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white border border-gray-100 rounded-xl shadow-lg p-3 text-xs">
-        <p className="font-semibold text-gray-700 mb-1">{label}</p>
+      <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-white/10 rounded-xl shadow-lg p-3 text-xs">
+        <p className="font-semibold text-gray-700 dark:text-gray-200 mb-1">{label}</p>
         {payload.map((p: any, i: number) => (
           <p key={i} style={{ color: p.color }} className="font-medium">
             {p.name}: ${(p.value / 1000).toFixed(0)}k
@@ -123,8 +123,8 @@ export default function FinanceDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Finance</h1>
-          <p className="text-gray-500 mt-1 text-sm">Financial overview, revenue tracking and expense management.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Finance</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">Financial overview, revenue tracking and expense management.</p>
         </div>
         <div className="flex items-center gap-2">
           <a href="/finance/invoices" className="flex items-center gap-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition-colors">
@@ -141,19 +141,19 @@ export default function FinanceDashboard() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         {metrics.map((m, i) => (
-          <Card key={i} className="border-gray-100 shadow-sm hover:shadow-md transition-shadow bg-white">
+          <Card key={i} className="border-gray-100 dark:border-white/8 shadow-sm hover:shadow-md transition-shadow bg-white dark:bg-white/3">
             <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">{m.title}</p>
-                  <p className="text-2xl font-bold text-gray-900">{m.value}</p>
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{m.title}</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{m.value}</p>
                   <div className="flex items-center gap-1.5 mt-2">
                     {m.up
                       ? <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
                       : <TrendingDown className="w-3.5 h-3.5 text-red-500" />
                     }
                     <span className={`text-xs font-medium ${m.up ? "text-emerald-600" : "text-red-600"}`}>{m.trend}</span>
-                    <span className="text-xs text-gray-400">{m.sub}</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">{m.sub}</span>
                   </div>
                 </div>
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${m.color}`}>
@@ -168,18 +168,18 @@ export default function FinanceDashboard() {
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Revenue vs Expenses chart */}
-        <Card className="lg:col-span-2 border-gray-100 shadow-sm bg-white">
+        <Card className="lg:col-span-2 border-gray-100 dark:border-white/8 shadow-sm bg-white dark:bg-white/3">
           <CardHeader className="pb-0 pt-5 px-6">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-base font-semibold text-gray-900">Revenue vs Expenses</CardTitle>
-                <p className="text-xs text-gray-500 mt-0.5">6-month financial performance</p>
+                <CardTitle className="text-base font-semibold text-gray-900 dark:text-white">Revenue vs Expenses</CardTitle>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">6-month financial performance</p>
               </div>
               <div className="flex items-center gap-4 text-xs">
-                <span className="flex items-center gap-1.5 text-gray-500">
+                <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
                   <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 inline-block" />Revenue
                 </span>
-                <span className="flex items-center gap-1.5 text-gray-500">
+                <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
                   <span className="w-2.5 h-2.5 rounded-full bg-red-400 inline-block" />Expenses
                 </span>
               </div>
@@ -210,10 +210,10 @@ export default function FinanceDashboard() {
         </Card>
 
         {/* Expense breakdown */}
-        <Card className="border-gray-100 shadow-sm bg-white">
+        <Card className="border-gray-100 dark:border-white/8 shadow-sm bg-white dark:bg-white/3">
           <CardHeader className="pb-0 pt-5 px-6">
-            <CardTitle className="text-base font-semibold text-gray-900">Expense Breakdown</CardTitle>
-            <p className="text-xs text-gray-500 mt-0.5">By category</p>
+            <CardTitle className="text-base font-semibold text-gray-900 dark:text-white">Expense Breakdown</CardTitle>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">By category</p>
           </CardHeader>
           <CardContent className="pt-4 pb-4">
             <ResponsiveContainer width="100%" height={180}>
@@ -231,9 +231,9 @@ export default function FinanceDashboard() {
                 <div key={cat.name} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: cat.color }} />
-                    <span className="text-xs text-gray-600">{cat.name}</span>
+                    <span className="text-xs text-gray-600 dark:text-gray-300">{cat.name}</span>
                   </div>
-                  <span className="text-xs font-semibold text-gray-800">${cat.value.toLocaleString()}</span>
+                  <span className="text-xs font-semibold text-gray-800 dark:text-gray-200">${cat.value.toLocaleString()}</span>
                 </div>
               ))}
             </div>
@@ -242,12 +242,12 @@ export default function FinanceDashboard() {
       </div>
 
       {/* Recent Invoices */}
-      <Card className="border-gray-100 shadow-sm bg-white">
+      <Card className="border-gray-100 dark:border-white/8 shadow-sm bg-white dark:bg-white/3">
         <CardHeader className="pt-5 px-6 pb-4">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-base font-semibold text-gray-900">Recent Invoices</CardTitle>
-              <p className="text-xs text-gray-500 mt-0.5">Latest invoice activity</p>
+              <CardTitle className="text-base font-semibold text-gray-900 dark:text-white">Recent Invoices</CardTitle>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Latest invoice activity</p>
             </div>
             <a href="/finance/invoices" className="text-xs text-indigo-600 font-medium hover:underline">
               View all →
@@ -258,21 +258,21 @@ export default function FinanceDashboard() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="text-left text-xs font-semibold text-gray-500 pb-3 uppercase tracking-wide">Invoice</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 pb-3 uppercase tracking-wide">Client</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 pb-3 uppercase tracking-wide">Amount</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 pb-3 uppercase tracking-wide">Due Date</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 pb-3 uppercase tracking-wide">Status</th>
+                <tr className="border-b border-gray-100 dark:border-white/8">
+                  <th className="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 pb-3 uppercase tracking-wide">Invoice</th>
+                  <th className="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 pb-3 uppercase tracking-wide">Client</th>
+                  <th className="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 pb-3 uppercase tracking-wide">Amount</th>
+                  <th className="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 pb-3 uppercase tracking-wide">Due Date</th>
+                  <th className="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 pb-3 uppercase tracking-wide">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-gray-50 dark:divide-white/5">
                 {recentInvoices.map((inv: any, i) => (
-                  <tr key={i} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="py-3 font-mono text-xs text-gray-700 font-medium">{inv.invoice_number}</td>
-                    <td className="py-3 text-sm text-gray-800 font-medium">{inv.client}</td>
-                    <td className="py-3 text-sm font-semibold text-gray-900">${inv.amount.toLocaleString()}</td>
-                    <td className="py-3 text-xs text-gray-500">{inv.due_date}</td>
+                  <tr key={i} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors">
+                    <td className="py-3 font-mono text-xs text-gray-700 dark:text-gray-300 font-medium">{inv.invoice_number}</td>
+                    <td className="py-3 text-sm text-gray-800 dark:text-gray-200 font-medium">{inv.client}</td>
+                    <td className="py-3 text-sm font-semibold text-gray-900 dark:text-white">${inv.amount.toLocaleString()}</td>
+                    <td className="py-3 text-xs text-gray-500 dark:text-gray-400">{inv.due_date}</td>
                     <td className="py-3">
                       <Badge className={`text-[10px] font-semibold uppercase tracking-wide border-0 ${statusColors[inv.status] || "bg-gray-100 text-gray-600"}`}>
                         {inv.status}

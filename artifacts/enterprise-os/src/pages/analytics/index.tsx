@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line,
 } from "recharts";
-import { Download, TrendingUp, Users, Activity, FileText, Building2 } from "lucide-react";
+import { Download, TrendingUp, TrendingDown, Users, Activity, FileText, Building2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { fetchWithAuth } from "@/components/dashboard/widgets/fetchWithAuth";
 import { HRAnalyticsWidget } from "@/components/dashboard/widgets/analytics/HRAnalyticsWidget";
@@ -109,7 +109,7 @@ function EmployeeSelfStats() {
         <Card key={s.label}>
           <CardContent className="pt-5 pb-4 px-5">
             {s.loading ? (
-              <div className="h-10 bg-gray-100 rounded animate-pulse" />
+              <div className="h-10 bg-gray-100 dark:bg-white/5 rounded animate-pulse" />
             ) : (
               <>
                 <p className="text-2xl font-bold text-gray-900">{s.value}</p>
@@ -164,11 +164,11 @@ export default function AnalyticsPage() {
     : "Your personal operational metrics.";
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       {/* ── Page Header ─────────────────────────────────────────────────── */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Analytics & Reporting</h1>
-        <p className="text-muted-foreground mt-1 text-sm">{pageSubtitle}</p>
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Analytics & Reporting</h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">{pageSubtitle}</p>
       </div>
 
       {/* ── Overview KPIs + Charts (Admin only) ────────────────────────── */}
@@ -177,54 +177,86 @@ export default function AnalyticsPage() {
           <SectionHeader icon={TrendingUp} title="Overview KPIs" subtitle="Company-wide performance snapshot" />
           {isOverviewLoading || isDeptLoading || isRevLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[...Array(4)].map((_, i) => <div key={i} className="h-24 bg-gray-100 rounded-xl animate-pulse" />)}
+              {[...Array(4)].map((_, i) => <div key={i} className="h-24 bg-gray-100 dark:bg-white/5 rounded-xl animate-pulse" />)}
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                 {(overview?.kpis ?? []).map((kpi: { label: string; value: string; change: number; trend: string }, i: number) => (
-                  <Card key={i}>
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                      <CardTitle className="text-sm font-medium text-muted-foreground">{kpi.label}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{kpi.value}</div>
-                      <p className={`text-xs mt-1 ${kpi.change >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                        {kpi.change >= 0 ? "+" : ""}{kpi.change}%
-                      </p>
+                  <Card key={i} className="bg-white dark:bg-white/3 border-gray-100 dark:border-white/8 shadow-sm hover:shadow-md transition-shadow">
+                    <CardContent className="p-5">
+                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{kpi.label}</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">{kpi.value}</p>
+                      <div className="flex items-center gap-1.5 mt-2">
+                        {kpi.change >= 0
+                          ? <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+                          : <TrendingDown className="w-3.5 h-3.5 text-red-500" />
+                        }
+                        <span className={`text-xs font-medium ${kpi.change >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                          {kpi.change >= 0 ? "+" : ""}{kpi.change}% vs last month
+                        </span>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
               </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="min-h-[360px]">
-                  <CardHeader><CardTitle>Revenue Trend</CardTitle></CardHeader>
-                  <CardContent className="h-72">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <Card className="bg-white dark:bg-white/3 border-gray-100 dark:border-white/8 shadow-sm">
+                  <CardHeader className="pb-0 pt-5 px-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-base font-semibold text-gray-900 dark:text-white">Revenue Trend</CardTitle>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Monthly revenue vs expenses</p>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs">
+                        <span className="flex items-center gap-1.5 text-gray-500">
+                          <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 inline-block" />Revenue
+                        </span>
+                        <span className="flex items-center gap-1.5 text-gray-500">
+                          <span className="w-2.5 h-2.5 rounded-full bg-red-400 inline-block" />Expenses
+                        </span>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="px-2 pb-4 pt-4 h-72">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={revenueTrend}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                        <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#6b7280" }} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#6b7280" }} tickFormatter={(v) => `$${v / 1000}k`} />
-                        <Tooltip />
-                        <Legend />
-                        <Line type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
-                        <Line type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
+                      <LineChart data={revenueTrend} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                        <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#9ca3af" }} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#9ca3af" }} tickFormatter={(v) => `$${v / 1000}k`} />
+                        <Tooltip contentStyle={{ fontSize: 12, borderRadius: 12, border: "1px solid #f3f4f6", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }} />
+                        <Line type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={2.5} dot={false} activeDot={{ r: 5, fill: "#6366f1", strokeWidth: 2, stroke: "#fff" }} />
+                        <Line type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={2} dot={false} activeDot={{ r: 5, fill: "#ef4444", strokeWidth: 2, stroke: "#fff" }} />
                       </LineChart>
                     </ResponsiveContainer>
                   </CardContent>
                 </Card>
-                <Card className="min-h-[360px]">
-                  <CardHeader><CardTitle>Department Performance</CardTitle></CardHeader>
-                  <CardContent className="h-72">
+                <Card className="bg-white dark:bg-white/3 border-gray-100 dark:border-white/8 shadow-sm">
+                  <CardHeader className="pb-0 pt-5 px-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-base font-semibold text-gray-900 dark:text-white">Department Performance</CardTitle>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Progress & attendance by department</p>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs">
+                        <span className="flex items-center gap-1.5 text-gray-500">
+                          <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 inline-block" />Performance
+                        </span>
+                        <span className="flex items-center gap-1.5 text-gray-500">
+                          <span className="w-2.5 h-2.5 rounded-full bg-indigo-300 inline-block" />Attendance
+                        </span>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="px-2 pb-4 pt-4 h-72">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={deptStats}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                        <XAxis dataKey="department" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#6b7280" }} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#6b7280" }} domain={[0, 100]} unit="%" />
-                        <Tooltip formatter={(v: number) => `${v}%`} />
-                        <Legend />
-                        <Bar dataKey="performance" name="Performance" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="budget_used" name="Budget Used" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                      <BarChart data={deptStats} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                        <XAxis dataKey="department" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#9ca3af" }} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#9ca3af" }} domain={[0, 100]} unit="%" />
+                        <Tooltip formatter={(v: number) => `${v}%`} contentStyle={{ fontSize: 12, borderRadius: 12, border: "1px solid #f3f4f6", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }} />
+                        <Bar dataKey="performance" name="Performance" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                        <Bar dataKey="budget_used" name="Attendance" fill="#a5b4fc" radius={[4, 4, 0, 0]} maxBarSize={28} />
                       </BarChart>
                     </ResponsiveContainer>
                   </CardContent>

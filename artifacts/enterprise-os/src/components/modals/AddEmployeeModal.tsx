@@ -89,7 +89,7 @@ export function AddEmployeeModal({ open, onClose }: Props) {
             <div className="space-y-1.5">
               <Label htmlFor="department">Department *</Label>
               <select id="department" {...register("department")}
-                className="w-full h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus:ring-1 focus:ring-ring">
+                className="w-full h-9 rounded-md border border-input bg-background text-foreground px-3 py-1 text-sm shadow-sm outline-none focus:ring-1 focus:ring-ring">
                 <option value="">Select department</option>
                 {departments?.map(d => (
                   <option key={d.id} value={d.name}>{d.name}</option>
@@ -113,7 +113,7 @@ export function AddEmployeeModal({ open, onClose }: Props) {
             <div className="space-y-1.5">
               <Label htmlFor="status">Status</Label>
               <select id="status" {...register("status")}
-                className="w-full h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus:ring-1 focus:ring-ring">
+                className="w-full h-9 rounded-md border border-input bg-background text-foreground px-3 py-1 text-sm shadow-sm outline-none focus:ring-1 focus:ring-ring">
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
                 <option value="on_leave">On Leave</option>

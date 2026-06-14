@@ -110,7 +110,7 @@ export function AddDealModal({ open, onClose }: Props) {
             <div className="space-y-1.5">
               <Label htmlFor="stage">Stage</Label>
               <select id="stage" {...register("stage")}
-                className="w-full h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus:ring-1 focus:ring-ring">
+                className="w-full h-9 rounded-md border border-input bg-background text-foreground px-3 py-1 text-sm shadow-sm outline-none focus:ring-1 focus:ring-ring">
                 {STAGES.map(s => <option key={s} value={s} className="capitalize">{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
               </select>
             </div>

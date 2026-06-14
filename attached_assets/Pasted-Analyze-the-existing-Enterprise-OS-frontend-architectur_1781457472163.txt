@@ -1,0 +1,223 @@
+Analyze the existing Enterprise OS frontend architecture and UI system before making changes.
+
+IMPORTANT:
+Do NOT rewrite the application.
+Do NOT redesign the entire UI.
+Do NOT regenerate pages from scratch.
+Do NOT modify backend APIs.
+Do NOT change RBAC/workflow/analytics logic.
+Do NOT break routing or permissions.
+
+Current system state:
+
+* Enterprise OS platform is feature-complete
+* Backend architecture is stable
+* RBAC/scoping/workflows/analytics are complete
+* AI Copilot now uses real scoped database data
+* Frontend already uses:
+
+  * React
+  * TypeScript
+  * Tailwind CSS
+  * shadcn/ui
+* Dashboard system already exists
+* Widget system already exists
+
+GOAL:
+Perform a professional frontend polish and UX consistency pass to improve overall presentation quality and enterprise feel.
+
+Focus on:
+
+* visual consistency
+* spacing
+* typography
+* alignment
+* responsiveness
+* loading states
+* table polish
+* dashboard polish
+* modal polish
+* enterprise-grade UI refinement
+
+DO NOT add new business features.
+
+REQUIRED TASKS
+
+1. Analyze current UI consistency first.
+
+Review:
+
+* spacing system
+* card padding consistency
+* typography scale
+* table styles
+* chart container styles
+* sidebar consistency
+* modal consistency
+* button variants
+* empty states
+* loading states
+* responsive behavior
+
+Before changing anything:
+Explain:
+
+* where UI inconsistency exists
+* which components look visually weaker
+* safest refinement path
+
+2. Standardize spacing and layout rhythm.
+
+Requirements:
+
+* consistent card padding
+* consistent section spacing
+* consistent dashboard gaps
+* consistent table spacing
+* avoid overcrowded layouts
+
+Do NOT redesign layouts.
+
+3. Improve typography hierarchy.
+
+Requirements:
+
+* clearer page titles
+* cleaner section headings
+* consistent font sizing
+* improved metric readability
+* better KPI emphasis
+
+Maintain current theme/colors.
+
+4. Polish dashboard widgets.
+
+Improve:
+
+* widget alignment
+* KPI card consistency
+* chart spacing
+* visual balance
+* widget header hierarchy
+
+Keep current widget architecture.
+
+5. Improve tables professionally.
+
+Improve:
+
+* row spacing
+* hover states
+* header clarity
+* pagination alignment
+* empty states
+* action button alignment
+
+Do NOT rewrite table logic.
+
+6. Improve modal polish.
+
+Check:
+
+* modal spacing
+* form alignment
+* footer actions
+* scroll behavior
+* responsive sizing
+
+Keep modal functionality unchanged.
+
+7. Improve loading and empty states.
+
+Requirements:
+
+* skeleton loaders where appropriate
+* better empty-state messaging
+* smoother loading transitions
+
+Do NOT add heavy animation libraries.
+
+8. Improve responsive behavior.
+
+Check:
+
+* sidebar responsiveness
+* analytics cards
+* dashboard widgets
+* tables overflow
+* modal responsiveness
+
+Focus only on:
+
+* tablet
+* laptop
+* standard desktop
+
+Do NOT spend time on perfect mobile optimization.
+
+9. Improve enterprise visual consistency.
+
+Requirements:
+
+* reduce visual clutter
+* unify card styling
+* unify shadows/borders
+* improve chart container appearance
+* improve navigation clarity
+
+Avoid:
+
+* flashy gradients
+* glassmorphism
+* excessive animations
+* startup-style redesigns
+
+Target:
+clean enterprise SaaS appearance.
+
+10. Add lightweight branding polish.
+
+Safely improve:
+
+* application logo placement
+* sidebar brand section
+* favicon consistency
+* page title consistency
+* header hierarchy
+
+Do NOT redesign layouts.
+
+11. Preserve architecture stability.
+
+Do NOT:
+
+* rewrite components
+* regenerate pages
+* modify APIs
+* break routing
+* touch backend
+* change RBAC
+
+Reuse:
+
+* existing component system
+* existing widget system
+* existing shadcn components
+* existing Tailwind structure
+
+FINAL VERIFICATION REQUIREMENTS
+
+Verify:
+
+* no frontend regressions
+* no broken layouts
+* no routing issues
+* no RBAC visibility issues
+* consistent spacing across pages
+* charts render correctly
+* tables remain functional
+* modals remain functional
+* responsive layouts remain stable
+
+Goal outcome:
+Improve perceived frontend quality from prototype-level polish to professional enterprise SaaS polish WITHOUT redesigning the platform or destabilizing the architecture.
