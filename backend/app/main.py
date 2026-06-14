@@ -273,6 +273,43 @@ def startup():
             db.add_all(workflows_data)
             db.flush()
 
+        if db.query(models.WorkflowStep).count() == 0:
+            wf_steps = {
+                "New Employee Onboarding": [
+                    models.WorkflowStep(step_order=1, action_type="create_task", target="IT Setup Team"),
+                    models.WorkflowStep(step_order=2, action_type="send_notification", target="HR Manager"),
+                    models.WorkflowStep(step_order=3, action_type="send_email", target="new.employee@company.com"),
+                    models.WorkflowStep(step_order=4, action_type="update_status", target="Onboarding In Progress"),
+                ],
+                "Invoice Payment Reminder": [
+                    models.WorkflowStep(step_order=1, action_type="send_email", target="finance@client.com"),
+                    models.WorkflowStep(step_order=2, action_type="send_notification", target="Finance Manager"),
+                    models.WorkflowStep(step_order=3, action_type="update_status", target="Reminder Sent"),
+                ],
+                "Lead Qualification Scoring": [
+                    models.WorkflowStep(step_order=1, action_type="update_status", target="Scoring In Progress"),
+                    models.WorkflowStep(step_order=2, action_type="create_task", target="Sales Rep"),
+                    models.WorkflowStep(step_order=3, action_type="send_notification", target="Sales Manager"),
+                ],
+                "Weekly Performance Report": [
+                    models.WorkflowStep(step_order=1, action_type="create_task", target="Analytics Team"),
+                    models.WorkflowStep(step_order=2, action_type="send_email", target="leadership@company.com"),
+                    models.WorkflowStep(step_order=3, action_type="send_notification", target="All Department Heads"),
+                ],
+                "Low Stock Alert": [
+                    models.WorkflowStep(step_order=1, action_type="send_notification", target="Procurement Team"),
+                    models.WorkflowStep(step_order=2, action_type="create_task", target="Warehouse Manager"),
+                    models.WorkflowStep(step_order=3, action_type="send_email", target="procurement@company.com"),
+                ],
+            }
+            for wf_name, steps in wf_steps.items():
+                wf = db.query(models.Workflow).filter(models.Workflow.name == wf_name).first()
+                if wf:
+                    for step in steps:
+                        step.workflow_id = wf.id
+                        db.add(step)
+            db.flush()
+
         if db.query(models.Notification).count() == 0:
             notifications_data = [
                 models.Notification(title="New Lead Assigned", message="Michael Grant from TechCorp has been assigned to you", type="info", read=False, link="/crm/leads"),

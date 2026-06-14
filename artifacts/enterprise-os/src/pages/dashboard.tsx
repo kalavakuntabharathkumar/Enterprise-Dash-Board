@@ -41,12 +41,6 @@ const FALLBACK_REVENUE = [
   { month: "Dec", revenue: 815000, expenses: 390000 },
 ];
 
-const WEEKLY_ATTENDANCE = [
-  { label: "Mon", value: 92 }, { label: "Tue", value: 78 },
-  { label: "Wed", value: 88 }, { label: "Thu", value: 95 },
-  { label: "Fri", value: 82 }, { label: "Sat", value: 45 },
-  { label: "Sun", value: 38 },
-];
 
 const ACTION_ICON: Record<string, string> = {
   login: "🔐", leave_submitted: "📋",
@@ -128,8 +122,14 @@ function getRoleKpis(
 // ─── Role-specific middle row ──────────────────────────────────────────────
 
 function MiddleRow({
-  role, chartData, stats,
-}: { role: string; chartData: any[]; stats: any }) {
+  role, chartData, stats, weeklyAttendance, avgAttendance,
+}: {
+  role: string;
+  chartData: any[];
+  stats: any;
+  weeklyAttendance: any[];
+  avgAttendance: number;
+}) {
   if (role === "admin" || role === "super_admin") {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -180,17 +180,17 @@ function MiddleRow({
           </CardHeader>
           <CardContent className="px-4 pb-4 pt-4">
             <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={WEEKLY_ATTENDANCE} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <BarChart data={weeklyAttendance} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                 <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#9ca3af" }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#9ca3af" }} />
-                <Tooltip cursor={{ fill: "#f3f4f6" }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#9ca3af" }} domain={[0, 100]} unit="%" />
+                <Tooltip cursor={{ fill: "#f3f4f6" }} formatter={(v: any) => [`${v}%`, "Attendance"]} />
                 <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={32} />
               </BarChart>
             </ResponsiveContainer>
             <div className="flex items-center justify-between pt-2 border-t border-gray-50 mt-2">
               <span className="text-xs text-gray-500">Avg attendance</span>
-              <span className="text-sm font-bold text-gray-900">74%</span>
+              <span className="text-sm font-bold text-gray-900">{avgAttendance > 0 ? `${avgAttendance}%` : "—"}</span>
             </div>
           </CardContent>
         </Card>
@@ -353,6 +353,13 @@ export default function Dashboard() {
   const { data: revenueTrend }     = useGetRevenueTrend();
   const { data: notifications }    = useListNotifications();
 
+  const { data: attendanceData } = useQuery<{ weekly: any[]; avg_attendance: number }>({
+    queryKey: ["weekly-attendance"],
+    queryFn: () => fetchWithAuth("/api/analytics/attendance/weekly"),
+    staleTime: 5 * 60 * 1000,
+    enabled: ["admin", "super_admin"].includes(role),
+  });
+
   const { data: activityLogs } = useQuery<any[]>({
     queryKey: ["activity-feed"],
     queryFn: () => fetchWithAuth("/api/activity"),
@@ -384,6 +391,9 @@ export default function Dashboard() {
 
   const activityItems: any[] = activityLogs ?? [];
   const fallbackActivity     = ((notifications as any[]) ?? []).slice(0, 6);
+
+  const weeklyAttData = attendanceData?.weekly ?? [];
+  const weeklyAttAvg  = attendanceData?.avg_attendance ?? 0;
 
   if (isLoading) {
     return (
@@ -426,7 +436,7 @@ export default function Dashboard() {
       </div>
 
       {/* ── Role-specific middle row ── */}
-      <MiddleRow role={role} chartData={chartData} stats={stats} />
+      <MiddleRow role={role} chartData={chartData} stats={stats} weeklyAttendance={weeklyAttData} avgAttendance={weeklyAttAvg} />
 
       {/* ── Bottom row: Activity feed + Quick actions ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">

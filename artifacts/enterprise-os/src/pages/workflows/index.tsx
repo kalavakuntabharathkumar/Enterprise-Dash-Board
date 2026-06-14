@@ -1,11 +1,16 @@
 import React, { useState } from "react";
 import { useListWorkflows, useTriggerWorkflow, getListWorkflowsQueryKey } from "@workspace/api-client-react";
+import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Play, Activity, Plus, Search, Clock, Zap,
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
+} from "@/components/ui/sheet";
+import {
+  Play, Activity, Plus, Search, Zap,
   Calendar, Webhook, MoreHorizontal, CheckCircle2,
   XCircle, PauseCircle, BarChart3, Settings2, Copy, Trash2,
+  History, ChevronDown, ChevronRight, AlertTriangle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -44,6 +49,208 @@ const STATUS_CONFIG: Record<string, { icon: React.ElementType; color: string; do
 
 type FilterTab = "all" | "active" | "paused" | "inactive";
 
+// ── Run History Sheet ──────────────────────────────────────────────────────────
+
+interface ExecutionLog {
+  id: number;
+  step_order: number;
+  action_type: string;
+  target: string;
+  status: "success" | "failed" | "skipped";
+  message: string;
+  executed_at: string;
+}
+
+interface WorkflowRunRecord {
+  id: number;
+  status: "running" | "completed" | "failed";
+  started_at: string;
+  completed_at: string | null;
+  duration_ms: number | null;
+  error_message: string | null;
+  logs: ExecutionLog[];
+}
+
+const ACTION_TYPE_LABELS: Record<string, string> = {
+  send_notification: "Notification",
+  send_email: "Send Email",
+  create_task: "Create Task",
+  update_status: "Update Status",
+  approve_request: "Approval",
+};
+
+function RunStatusBadge({ status }: { status: WorkflowRunRecord["status"] }) {
+  const cfg = {
+    completed: { cls: "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20", label: "Completed" },
+    running:   { cls: "bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20", label: "Running" },
+    failed:    { cls: "bg-red-50 text-red-700 border-red-100 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20", label: "Failed" },
+  }[status] ?? { cls: "bg-gray-50 text-gray-600 border-gray-100", label: status };
+  return (
+    <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full border", cfg.cls)}>
+      {cfg.label}
+    </span>
+  );
+}
+
+function RunHistoryRow({ run }: { run: WorkflowRunRecord }) {
+  const [expanded, setExpanded] = useState(false);
+  const Icon = expanded ? ChevronDown : ChevronRight;
+  const hasLogs = run.logs.length > 0;
+
+  const startedAt = new Date(run.started_at);
+  const timeLabel = startedAt.toLocaleString("en", {
+    month: "short", day: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
+
+  return (
+    <div className="border border-gray-100 dark:border-white/8 rounded-xl overflow-hidden">
+      <button
+        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-white/3 transition-colors"
+        onClick={() => hasLogs && setExpanded(e => !e)}
+      >
+        {hasLogs
+          ? <Icon className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+          : <span className="w-3.5 h-3.5 flex-shrink-0" />
+        }
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            <RunStatusBadge status={run.status} />
+            <span className="text-[10px] text-gray-400">#{run.id}</span>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{timeLabel}</p>
+        </div>
+        <div className="text-right flex-shrink-0">
+          <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
+            {run.duration_ms != null ? (
+              run.duration_ms < 1000 ? `${run.duration_ms}ms`
+              : `${(run.duration_ms / 1000).toFixed(1)}s`
+            ) : "—"}
+          </p>
+          <p className="text-[10px] text-gray-400">{run.logs.length} step{run.logs.length !== 1 ? "s" : ""}</p>
+        </div>
+      </button>
+
+      {expanded && hasLogs && (
+        <div className="border-t border-gray-100 dark:border-white/8 bg-gray-50 dark:bg-white/2 px-4 py-3 space-y-2">
+          {run.error_message && (
+            <div className="flex items-start gap-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-lg px-3 py-2 mb-3">
+              <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+              {run.error_message}
+            </div>
+          )}
+          {run.logs.map(log => (
+            <div key={log.id} className="flex items-start gap-2.5">
+              <div className={cn(
+                "w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0",
+                log.status === "success" ? "bg-emerald-400" :
+                log.status === "failed" ? "bg-red-400" : "bg-gray-300"
+              )} />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                    {ACTION_TYPE_LABELS[log.action_type] ?? log.action_type}
+                  </span>
+                  <span className="text-[10px] text-gray-300 dark:text-gray-600">→</span>
+                  <span className="text-[10px] text-gray-500 dark:text-gray-500 truncate">{log.target}</span>
+                </div>
+                <p className="text-xs text-gray-700 dark:text-gray-300">{log.message}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RunHistorySheet({
+  workflowId,
+  workflowName,
+  open,
+  onClose,
+}: {
+  workflowId: number | null;
+  workflowName: string;
+  open: boolean;
+  onClose: () => void;
+}) {
+  const token = localStorage.getItem("enterprise_os_token");
+  const { data: runs, isLoading } = useQuery<WorkflowRunRecord[]>({
+    queryKey: ["workflow-runs", workflowId],
+    queryFn: async () => {
+      const res = await fetch(`/api/workflows/${workflowId}/runs?limit=20`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error("Failed to fetch runs");
+      return res.json();
+    },
+    enabled: open && workflowId != null,
+    refetchInterval: open ? 10000 : false,
+  });
+
+  const completed = (runs ?? []).filter(r => r.status === "completed").length;
+  const failed = (runs ?? []).filter(r => r.status === "failed").length;
+
+  return (
+    <Sheet open={open} onOpenChange={o => !o && onClose()}>
+      <SheetContent className="w-[420px] sm:w-[480px] overflow-y-auto">
+        <SheetHeader className="pb-4">
+          <SheetTitle className="flex items-center gap-2">
+            <History className="w-4 h-4 text-indigo-500" />
+            Run History
+          </SheetTitle>
+          <SheetDescription className="text-sm text-gray-500 leading-snug">
+            {workflowName}
+          </SheetDescription>
+        </SheetHeader>
+
+        {/* Summary row */}
+        {(runs ?? []).length > 0 && (
+          <div className="grid grid-cols-3 gap-2 mb-5 p-3 bg-gray-50 dark:bg-white/3 rounded-xl border border-gray-100 dark:border-white/8">
+            <div className="text-center">
+              <p className="text-lg font-bold text-gray-900 dark:text-white">{runs!.length}</p>
+              <p className="text-[10px] text-gray-500">Total</p>
+            </div>
+            <div className="text-center border-x border-gray-100 dark:border-white/8">
+              <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{completed}</p>
+              <p className="text-[10px] text-gray-500">Passed</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-bold text-red-500 dark:text-red-400">{failed}</p>
+              <p className="text-[10px] text-gray-500">Failed</p>
+            </div>
+          </div>
+        )}
+
+        {isLoading && (
+          <div className="space-y-3">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-14 bg-gray-100 dark:bg-white/5 rounded-xl animate-pulse" />
+            ))}
+          </div>
+        )}
+
+        {!isLoading && (runs ?? []).length === 0 && (
+          <div className="text-center py-12 text-gray-400">
+            <History className="w-8 h-8 mx-auto mb-2 opacity-30" />
+            <p className="text-sm">No runs recorded yet</p>
+            <p className="text-xs mt-1">Trigger this workflow to create the first run.</p>
+          </div>
+        )}
+
+        {!isLoading && (runs ?? []).length > 0 && (
+          <div className="space-y-2">
+            {runs!.map(run => <RunHistoryRow key={run.id} run={run} />)}
+          </div>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+// ── Workflow Card ──────────────────────────────────────────────────────────────
+
 interface WorkflowCardProps {
   workflow: WorkflowData & { runs: number; last_run: string | null };
   onTrigger: () => void;
@@ -51,6 +258,7 @@ interface WorkflowCardProps {
   onEdit: () => void;
   onDelete: () => void;
   onDuplicate: () => void;
+  onHistory: () => void;
 }
 
 function formatDuration(ms: number | null | undefined): string {
@@ -60,7 +268,7 @@ function formatDuration(ms: number | null | undefined): string {
   return `${(ms / 60000).toFixed(1)}m`;
 }
 
-function WorkflowCard({ workflow, onTrigger, isTriggering, onEdit, onDelete, onDuplicate }: WorkflowCardProps) {
+function WorkflowCard({ workflow, onTrigger, isTriggering, onEdit, onDelete, onDuplicate, onHistory }: WorkflowCardProps) {
   const status = STATUS_CONFIG[workflow.status] || STATUS_CONFIG.inactive;
   const StatusIcon = status.icon;
   const triggerKey = workflow.trigger?.toLowerCase().replace(/[^a-z]/g, "") || "manual";
@@ -189,7 +397,16 @@ function WorkflowCard({ workflow, onTrigger, isTriggering, onEdit, onDelete, onD
         )}
 
         {/* Action buttons */}
-        <div className="flex gap-2">
+        <div className="flex gap-1.5">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:bg-white/5 px-2.5 transition-colors"
+            onClick={onHistory}
+            title="View run history"
+          >
+            <History className="w-3.5 h-3.5" />
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -236,6 +453,7 @@ export default function WorkflowsPage() {
   const [editingWorkflow, setEditingWorkflow] = useState<WorkflowData | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [historyWorkflow, setHistoryWorkflow] = useState<{ id: number; name: string } | null>(null);
 
   const openNew = () => {
     setEditingWorkflow(null);
@@ -465,6 +683,7 @@ export default function WorkflowsPage() {
                 onEdit={() => openEdit(workflow)}
                 onDelete={() => setDeleteTarget({ id: workflow.id, name: workflow.name })}
                 onDuplicate={() => handleDuplicate(workflow)}
+                onHistory={() => setHistoryWorkflow({ id: workflow.id, name: workflow.name })}
               />
             ))}
           </div>
@@ -477,6 +696,14 @@ export default function WorkflowsPage() {
         onClose={() => setEditorOpen(false)}
         workflow={editingWorkflow}
         onSaved={handleSaved}
+      />
+
+      {/* Run History Sheet */}
+      <RunHistorySheet
+        open={Boolean(historyWorkflow)}
+        workflowId={historyWorkflow?.id ?? null}
+        workflowName={historyWorkflow?.name ?? ""}
+        onClose={() => setHistoryWorkflow(null)}
       />
 
       {/* Delete Confirmation */}

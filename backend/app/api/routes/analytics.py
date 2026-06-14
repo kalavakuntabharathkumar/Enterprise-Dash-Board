@@ -289,6 +289,59 @@ def get_document_analytics(
     return get_document_analytics(current_user, db)
 
 
+# ── Attendance analytics ───────────────────────────────────────────────────────
+
+@router.get("/attendance/weekly")
+def get_weekly_attendance(
+    db: Session = Depends(get_db),
+    _=Depends(get_current_user),
+):
+    """
+    Return attendance counts grouped by day-of-week using real attendance_records.
+    SQLite strftime('%w', date): 0 = Sunday, 1 = Monday … 6 = Saturday.
+    """
+    from sqlalchemy import text
+
+    rows = db.execute(text(
+        "SELECT strftime('%w', date) AS dow, status, COUNT(*) AS cnt "
+        "FROM attendance_records "
+        "GROUP BY dow, status"
+    )).fetchall()
+
+    DOW_NAME = {0: "Sun", 1: "Mon", 2: "Tue", 3: "Wed", 4: "Thu", 5: "Fri", 6: "Sat"}
+    DOW_ORDER = [1, 2, 3, 4, 5, 6, 0]  # Mon … Sun
+
+    # Aggregate into {dow: {present, total}}
+    agg: dict[int, dict] = {}
+    for row in rows:
+        dow = int(row[0])
+        status = row[1]
+        cnt = row[2]
+        if dow not in agg:
+            agg[dow] = {"present": 0, "total": 0}
+        agg[dow]["total"] += cnt
+        if status in ("present", "late"):
+            agg[dow]["present"] += cnt
+
+    weekly = []
+    for dow in DOW_ORDER:
+        d = agg.get(dow, {"present": 0, "total": 0})
+        total = d["total"]
+        present = d["present"]
+        value = round(present / total * 100) if total > 0 else 0
+        weekly.append({
+            "label": DOW_NAME[dow],
+            "value": value,
+            "present": present,
+            "total": total,
+        })
+
+    days_with_data = [d for d in weekly if d["total"] > 0]
+    avg = round(sum(d["value"] for d in days_with_data) / len(days_with_data)) if days_with_data else 0
+
+    return {"weekly": weekly, "avg_attendance": avg}
+
+
 # ── CSV Export endpoints ───────────────────────────────────────────────────────
 
 @router.get("/export/hr")

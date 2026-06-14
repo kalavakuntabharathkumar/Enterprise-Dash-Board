@@ -165,42 +165,24 @@ def trigger_workflow(id: int, db: Session = Depends(get_db)):
     if not w:
         raise HTTPException(status_code=404, detail="Not found")
 
-    now = datetime.utcnow()
-    # Record the run as a proper WorkflowRun entry
-    run = models.WorkflowRun(
-        workflow_id=w.id,
-        status="completed",
-        started_at=now,
-        completed_at=now,
-        duration_ms=350,
-    )
-    db.add(run)
+    from app.workflows.trigger import TriggerDispatcher
+    result = TriggerDispatcher(db).dispatch(id)
 
-    w.runs = (w.runs or 0) + 1
-    w.last_run = str(now)
-    db.commit()
-
-    notif = models.Notification(
-        title="Workflow Triggered",
-        message=f'Workflow "{w.name}" was triggered successfully.',
-        type="success",
-    )
-    db.add(notif)
-    db.commit()
-
-    stats_map = compute_workflow_stats(db, [w.id])
+    stats_map = compute_workflow_stats(db, [id])
     return {
         "workflow_id": id,
-        "status": "success",
-        "timestamp": str(now),
-        "message": f'Workflow "{w.name}" triggered successfully',
-        "stats": stats_map.get(w.id, {}),
+        "status": result["status"],
+        "run_id": result.get("run_id"),
+        "duration_ms": result.get("duration_ms"),
+        "steps_executed": result.get("steps_executed", 0),
+        "message": f'Workflow "{w.name}" executed with status: {result["status"]}',
+        "stats": stats_map.get(id, {}),
     }
 
 
 @router.get("/{id}/runs")
 def list_workflow_runs(id: int, limit: int = 20, db: Session = Depends(get_db)):
-    """Return recent runs for a specific workflow."""
+    """Return recent runs with per-step execution logs for a specific workflow."""
     w = db.query(models.Workflow).filter(models.Workflow.id == id).first()
     if not w:
         raise HTTPException(status_code=404, detail="Not found")
@@ -220,6 +202,18 @@ def list_workflow_runs(id: int, limit: int = 20, db: Session = Depends(get_db)):
             "completed_at": str(r.completed_at) if r.completed_at else None,
             "duration_ms": r.duration_ms,
             "error_message": r.error_message,
+            "logs": [
+                {
+                    "id": log.id,
+                    "step_order": log.step_order,
+                    "action_type": log.action_type,
+                    "target": log.target,
+                    "status": log.status,
+                    "message": log.message,
+                    "executed_at": str(log.executed_at),
+                }
+                for log in sorted(r.logs, key=lambda l: l.step_order)
+            ],
         }
         for r in runs
     ]

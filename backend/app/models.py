@@ -273,6 +273,20 @@ class WorkflowRun(Base):
     duration_ms = Column(Integer, nullable=True)
     error_message = Column(Text, nullable=True)
     workflow = relationship("Workflow", back_populates="run_records")
+    logs = relationship("WorkflowExecutionLog", back_populates="run", cascade="all, delete-orphan")
+
+
+class WorkflowExecutionLog(Base):
+    __tablename__ = "workflow_execution_logs"
+    id = Column(Integer, primary_key=True, index=True)
+    run_id = Column(Integer, ForeignKey("workflow_runs.id"), nullable=False)
+    step_order = Column(Integer, nullable=False)
+    action_type = Column(String, nullable=False)
+    target = Column(String, nullable=True)
+    status = Column(String, nullable=False)  # success | failed | skipped
+    message = Column(Text, nullable=True)
+    executed_at = Column(DateTime, default=datetime.utcnow)
+    run = relationship("WorkflowRun", back_populates="logs")
 
 
 # ── NEW MODELS ────────────────────────────────────────────────────────────────

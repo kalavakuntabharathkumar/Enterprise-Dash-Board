@@ -1,0 +1,125 @@
+# PROMPT 3 — Fix Hardcoded Attendance Analytics + Add Lightweight Workflow Execution Engine
+
+You are a senior enterprise software engineer improving an "Enterprise OS" prototype.
+
+Current Problems:
+
+1. Weekly attendance dashboard uses hardcoded static data:
+   WEEKLY_ATTENDANCE
+
+instead of real attendance_records table data.
+
+2. Workflow Automation module is UI-only:
+
+* no execution engine
+* no trigger handling
+* no workflow step execution
+* no run history
+
+Your task:
+Transform the system into a believable lightweight enterprise automation prototype.
+
+PART 1 — REAL ATTENDANCE ANALYTICS
+
+Requirements:
+
+1. Remove ALL hardcoded attendance analytics arrays.
+
+2. Create backend analytics endpoints using attendance_records table.
+
+3. Implement:
+
+* weekly attendance aggregation
+* daily attendance counts
+* attendance trends
+* department attendance summary
+
+4. Use SQL aggregation queries.
+
+5. Frontend charts must fetch real backend analytics.
+
+6. Keep existing chart UI unchanged.
+
+7. Use:
+
+* FastAPI
+* SQLAlchemy
+* React Query
+* Recharts
+* TypeScript
+
+8. Add proper loading states and typed responses.
+
+---
+
+PART 2 — LIGHTWEIGHT WORKFLOW EXECUTION ENGINE
+
+IMPORTANT:
+Do NOT build a full enterprise BPMN system.
+
+Build a believable lightweight prototype execution engine only.
+
+Requirements:
+
+1. Add:
+
+* WorkflowRun model
+* WorkflowExecutionLog model
+
+2. Implement simple execution runner.
+
+Example flow:
+
+* workflow triggered
+* run created
+* steps executed sequentially
+* execution logs stored
+* run marked completed/failed
+
+3. Supported prototype actions:
+
+* send_notification
+* send_email
+* create_task
+* update_status
+* approve_request
+
+4. Implement execution service layer:
+
+* WorkflowExecutor
+* StepRunner
+* TriggerDispatcher
+
+5. Add trigger simulation endpoints:
+   Example:
+   POST /workflows/{id}/trigger
+
+6. Store execution history.
+
+7. Add frontend UI:
+
+* Run History
+* Execution Status
+* Last Run Time
+* Success/Failure Status
+
+8. Existing workflow dashboard UI should remain visually consistent.
+
+9. Architecture must feel:
+
+* modular
+* scalable
+* enterprise-inspired
+
+10. Keep scope realistic for a prototype.
+    Do NOT overengineer queues, Kafka, Redis, or distributed workers.
+
+11. Use clean architecture and proper folder separation.
+
+12. Final result should feel like:
+    “lightweight but functional enterprise workflow automation system”
+
+instead of:
+“dashboard-only mock UI”.
+
+Generate implementation-ready code only.
