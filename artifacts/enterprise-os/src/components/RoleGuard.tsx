@@ -8,13 +8,17 @@ interface RoleGuardProps {
 }
 
 export function RoleGuard({ roles, children }: RoleGuardProps) {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, permissionsLoaded } = useAuth();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  if (user && !roles.includes(user.role)) {
+  if (!permissionsLoaded) {
+    return null;
+  }
+
+  if (!user || !roles.includes(user.role)) {
     return <Navigate to="/access-denied" replace />;
   }
 
