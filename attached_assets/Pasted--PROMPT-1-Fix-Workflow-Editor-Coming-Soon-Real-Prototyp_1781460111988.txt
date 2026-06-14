@@ -1,0 +1,107 @@
+# PROMPT 1 — Fix Workflow Editor (“Coming Soon” → Real Prototype Feature)
+
+You are a senior full-stack engineer working on an enterprise SaaS prototype called "Enterprise OS".
+
+Current Issue:
+The Workflow Automation page contains:
+
+* "New Workflow"
+* "Edit Workflow"
+
+buttons that only show a "Coming soon" toast.
+
+This weakens prototype credibility.
+
+Your task:
+Implement a lightweight but realistic workflow editor prototype WITHOUT overengineering.
+
+IMPORTANT:
+Do NOT build a drag-drop BPMN editor.
+Do NOT add unnecessary complexity.
+This is a prototype intended for internship/company demo purposes.
+
+Requirements:
+
+1. Replace the toast behavior with a real modal/dialog-based workflow editor.
+
+2. The workflow editor must support:
+
+* Workflow Name
+* Description
+* Trigger Type dropdown
+* Enabled/Disabled toggle
+* Workflow Steps list
+
+3. Trigger dropdown options:
+
+* Leave Request Submitted
+* Employee Created
+* Invoice Generated
+* Deal Closed
+* Task Completed
+
+4. Workflow step structure:
+   Each step should contain:
+
+* step_order
+* action_type
+* target
+* delay_minutes (optional)
+
+5. Supported action types:
+
+* Send Notification
+* Send Email
+* Create Approval Task
+* Update Status
+* Escalate Request
+
+6. Build reusable React components:
+
+* WorkflowEditorModal
+* WorkflowStepCard
+* WorkflowTriggerSelector
+* WorkflowStepsList
+
+7. Use:
+
+* React
+* TypeScript
+* Tailwind
+* shadcn/ui
+* React Hook Form
+* Zod validation
+
+8. Create proper TypeScript interfaces.
+
+9. Add lightweight backend support using FastAPI.
+
+Backend Requirements:
+
+* Create Workflow model
+* Create WorkflowStep model
+* Add CRUD endpoints
+* Store workflows in database
+
+10. Keep implementation enterprise-clean:
+
+* modular files
+* reusable logic
+* proper naming
+* no giant components
+
+11. Existing UI/UX styling must remain unchanged.
+
+12. IMPORTANT:
+    This is still a prototype.
+    Do NOT overbuild.
+    Keep implementation realistic and believable for enterprise prototype scope.
+
+13. After implementation:
+
+* remove ALL "Coming soon" workflow toasts
+* all workflow actions should open real editor modals
+* workflows should persist correctly
+
+Generate production-quality code changes only.
+Do not generate placeholder pseudocode.

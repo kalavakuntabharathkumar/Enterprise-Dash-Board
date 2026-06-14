@@ -248,6 +248,18 @@ class Workflow(Base):
     runs = Column(Integer, default=0)
     last_run = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    steps = relationship("WorkflowStep", back_populates="workflow", cascade="all, delete-orphan", order_by="WorkflowStep.step_order")
+
+
+class WorkflowStep(Base):
+    __tablename__ = "workflow_steps"
+    id = Column(Integer, primary_key=True, index=True)
+    workflow_id = Column(Integer, ForeignKey("workflows.id"), nullable=False)
+    step_order = Column(Integer, nullable=False, default=0)
+    action_type = Column(String, nullable=False)
+    target = Column(String, nullable=False)
+    delay_minutes = Column(Integer, default=0)
+    workflow = relationship("Workflow", back_populates="steps")
 
 
 # ── NEW MODELS ────────────────────────────────────────────────────────────────
