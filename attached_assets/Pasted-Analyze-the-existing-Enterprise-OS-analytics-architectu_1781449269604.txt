@@ -1,0 +1,202 @@
+Analyze the existing Enterprise OS analytics architecture before making changes.
+
+IMPORTANT:
+Do NOT redesign the frontend.
+Do NOT rewrite analytics pages.
+Do NOT modify RBAC/scoping/workflow systems.
+Do NOT regenerate routes.
+Do NOT modify dashboard architecture.
+Do NOT break existing APIs.
+Do NOT introduce AI features yet.
+
+Current system state:
+
+* Enterprise OS platform is stable
+* RBAC and scoped access are complete
+* Analytics module already exists
+* Analytics routes already exist
+* Dashboard widgets already exist
+* SQLite database is active
+* Existing analytics contain some placeholder/mock/generated values
+
+GOAL:
+Replace all fake, hardcoded, generated, or placeholder analytics values with REAL database-driven operational analytics using existing SQLite data.
+
+IMPORTANT:
+This is a REAL DATA REFACTOR only.
+
+Do NOT redesign anything visually.
+
+REQUIRED TASKS
+
+1. Analyze current analytics implementation first.
+
+Identify:
+
+* where analytics are mocked/generated
+* where KPI percentages are hardcoded
+* where revenue/activity arrays are synthetic
+* which widgets still use placeholder data
+* which endpoints already use real DB data
+
+Before modifying files:
+Explain:
+
+* which files contain fake analytics
+* safest replacement strategy
+* how to preserve frontend compatibility
+
+2. Replace fake KPI calculations with real database calculations.
+
+Examples:
+
+* total employees
+* active employees
+* pending approvals
+* unread notifications
+* total documents
+* pending leave requests
+* completed workflows
+* department employee counts
+
+Use existing models only.
+
+3. Replace fake revenue and finance analytics.
+
+Use real:
+
+* Invoice
+* Expense
+
+data from SQLite.
+
+Implement:
+
+* monthly revenue totals
+* monthly expense totals
+* outstanding invoice totals
+* invoice status distribution
+* expense category breakdown
+
+Do NOT generate synthetic chart arrays.
+
+4. Replace fake leave and HR analytics.
+
+Use real:
+
+* LeaveRequest
+* WorkflowLog
+* Employee
+
+Implement:
+
+* monthly leave trends
+* approval turnaround averages
+* pending leave counts
+* leave status distribution
+* department leave activity
+
+5. Replace fake activity/document analytics.
+
+Use real:
+
+* ActivityLog
+* Document
+* Notification
+
+Implement:
+
+* activity frequency by day
+* uploads per month
+* document visibility distribution
+* unread notification counts
+* top active departments
+
+6. Preserve scoped analytics behavior.
+
+IMPORTANT:
+
+Existing scoped access MUST remain intact.
+
+Verify:
+
+* HR sees HR-scoped data
+* Finance sees finance-scoped data
+* Dept Heads see department-only analytics
+* Employees see only personal metrics
+
+Reuse existing:
+
+* RBAC utilities
+* scoping utilities
+* analytics services
+
+Do NOT duplicate filtering logic.
+
+7. Preserve frontend compatibility.
+
+IMPORTANT:
+
+Do NOT break:
+
+* existing analytics widgets
+* existing chart components
+* existing API response shapes
+* existing page layouts
+
+If response formats change:
+update frontend safely and minimally.
+
+8. Remove fake/canned operational summaries.
+
+Remove hardcoded strings such as:
+
+* “Revenue increased by 8.2%”
+* “Company performance strong”
+* fake trend summaries
+
+Replace with:
+
+* calculated values
+* computed trends
+* real percentage deltas
+
+9. Keep architecture modular.
+
+Reuse/create:
+
+backend/app/analytics/services/
+
+Keep:
+
+* finance analytics isolated
+* HR analytics isolated
+* activity analytics isolated
+
+Avoid:
+
+* giant analytics files
+* duplicated queries
+* hardcoded role checks
+
+10. Maintain SQLite compatibility.
+11. Maintain Replit compatibility.
+12. Preserve current frontend appearance.
+
+FINAL VERIFICATION REQUIREMENTS
+
+Verify:
+
+* all analytics now use real SQLite data
+* no synthetic chart arrays remain
+* no fake KPI strings remain
+* dashboard still renders correctly
+* charts still render correctly
+* scoped analytics still work
+* RBAC still works
+* no routing regressions
+* no frontend regressions
+* no workflow regressions
+
+Goal outcome:
+Transform analytics from demo/mock analytics into real operational enterprise analytics powered entirely by live SQLite data WITHOUT changing the existing frontend architecture.
